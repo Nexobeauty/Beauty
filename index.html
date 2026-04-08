@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seguimiento Asesoras Beauty</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 500px; margin: 0 auto; background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); position: relative; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { color: #764ba2; font-size: 24px; margin-bottom: 10px; }
+        .emoji { font-size: 50px; }
+        .btn { width: 100%; padding: 18px; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin: 12px 0; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        .btn-success { background: #2ed573; color: white; }
+        .btn-secondary { background: #f0f0f0; color: #333; }
+        .btn-danger { background: #ff4757; color: white; }
+        .btn-warning { background: #ffa502; color: white; }
+        .form-group { margin: 20px 0; }
+        .form-group label { display: block; margin-bottom: 8px; color: #333; font-weight: 600; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #764ba2; }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        .card { background: #f8f9fa; border-radius: 12px; padding: 20px; margin: 15px 0; }
+        .card h3 { color: #764ba2; margin-bottom: 15px; font-size: 16px; }
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .stat-box { background: white; padding: 15px; border-radius: 10px; text-align: center; }
+        .stat-box .value { font-size: 24px; font-weight: bold; color: #764ba2; }
+        .stat-box .label { font-size: 12px; color: #666; margin-top: 5px; }
+        .admin-icon { position: absolute; top: 15px; right: 15px; width: 40px; height: 40px; border-radius: 50%; background: #f0f0f0; border: none; cursor: pointer; font-size: 20px; }
+        .admin-section { border: 2px solid #764ba2; border-radius: 12px; padding: 20px; margin: 15px 0; }
+        .admin-section h3 { color: #764ba2; margin-bottom: 15px; }
+        .list-item { background: white; border: 2px solid #e0e0e0; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .list-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .list-item-actions { display: flex; gap: 8px; }
+        .list-item-actions button { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        .edit-btn { background: #667eea; color: white; }
+        .delete-btn { background: #ff4757; color: white; }
+        .add-row { display: flex; gap: 10px; margin-bottom: 15px; }
+        .add-row input { flex: 1; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; }
+        .add-row button { width: auto; padding: 12px 20px; }
+        .back-btn { position: absolute; top: 15px; left: 15px; width: 40px; height: 40px; border-radius: 50%; background: #f0f0f0; border: none; cursor: pointer; font-size: 18px; }
+        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 15px 30px; border-radius: 10px; display: none; z-index: 1001; animation: slideUp 0.3s; }
+        .toast.active { display: block; }
+        @keyframes slideUp { from { opacity: 0; transform: translateX(-50%) translateY(20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; padding: 30px; border-radius: 15px; max-width: 450px; width: 90%; position: relative; max-height: 80vh; overflow-y: auto; }
+        .close-modal { position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; }
+        .branch-card { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 20px; border-radius: 12px; margin: 20px 0; }
+        .counter { display: flex; align-items: center; justify-content: center; gap: 15px; margin: 15px 0; }
+        .counter button { width: 45px; height: 45px; border: none; border-radius: 50%; font-size: 24px; cursor: pointer; background: #764ba2; color: white; }
+        .counter span { font-size: 28px; font-weight: bold; min-width: 40px; text-align: center; }
+        .eval-option { flex: 1; min-width: 80px; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; text-align: center; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        .eval-option:hover { transform: scale(1.05); }
+        .eval-option.selected.yes { background: #2ed573; color: white; border-color: #2ed573; }
+        .eval-option.selected.no { background: #ff4757; color: white; border-color: #ff4757; }
+        .eval-option.selected.na { background: #ffa502; color: white; border-color: #ffa502; }
+        .evaluation-item { background: white; border-radius: 12px; padding: 20px; margin: 15px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .evaluation-item h4 { color: #333; margin-bottom: 15px; font-size: 14px; }
+        .evaluation-options { display: flex; gap: 10px; flex-wrap: wrap; }
+        .password-strength { margin-top: 8px; font-size: 12px; }
+        .password-strength.weak { color: #ff4757; }
+        .password-strength.medium { color: #ffa502; }
+        .password-strength.strong { color: #2ed573; }
+        .brand-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: white; border-radius: 12px; margin: 10px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .brand-item .brand-counter { display: flex; align-items: center; gap: 12px; }
+        .brand-item .brand-counter button { width: 40px; height: 40px; border: none; border-radius: 50%; font-size: 20px; cursor: pointer; background: #764ba2; color: white; }
+        .brand-item .brand-counter span { font-size: 20px; font-weight: bold; min-width: 30px; text-align: center; }
+        .total-brands-box { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 20px; border-radius: 12px; text-align: center; margin: 20px 0; }
+        .total-brands-box .value { font-size: 32px; font-weight: bold; }
+        .progress-bar { width: 100%; height: 10px; background: #e0e0e0; border-radius: 5px; margin: 10px 0; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 5px; transition: width 0.5s; }
+        .info-box { background: #e3f2fd; border-left: 4px solid #2196f3; padding: 15px; border-radius: 8px; margin: 15px 0; font-size: 13px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .nav-buttons { display: flex; gap: 10px; margin-top: 20px; }
+        .nav-buttons .btn { flex: 1; }
+        .sync-status { font-size: 12px; color: #666; margin-top: 10px; text-align: center; }
+        .sync-status.syncing { color: #ffa502; }
+        .sync-status.success { color: #2ed573; }
+        .sync-status.error { color: #ff4757; }
+        .loading { text-align: center; padding: 20px; color: #666; }
+        .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid #e0e0e0; border-top-color: #764ba2; border-radius: 50%; animation: spin 1s linear infinite; margin-right: 10px; vertical-align: middle; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="admin-icon" onclick="showScreen('admin-login-screen')" title="Administración">⚙️</button>
+
+        <!-- Pantalla de Carga -->
+        <div id="loading-screen" class="screen active">
+            <div class="header">
+                <div class="emoji">⏳</div>
+                <h1>Cargando...</h1>
+                <div class="loading">
+                    <span class="loading-spinner"></span>
+                    <span id="loading-text">Sincronizando configuración</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bienvenida -->
+        <div id="welcome-screen" class="screen">
+            <div class="header">
+                <div class="emoji">💄</div>
+                <h1>Seguimiento Asesoras Beauty</h1>
+                <p>Selecciona tu rol para continuar</p>
+            </div>
+            <button class="btn btn-primary" onclick="showScreen('advisor-screen')">
+                <span>💄</span><span><strong>Asesora de Belleza</strong><br><small>Registro diario de ventas</small></span>
+            </button>
+            <button class="btn btn-secondary" onclick="showScreen('regent-screen')">
+                <span>📋</span><span><strong>Regente</strong><br><small>Evaluación semanal</small></span>
+            </button>
+            <div class="sync-status" id="sync-status">Configuración cargada correctamente</div>
+        </div>
+
+        <!-- Login Admin -->
+        <div id="admin-login-screen" class="screen">
+            <button class="back-btn" onclick="showScreen('welcome-screen')">←</button>
+            <div class="header">
+                <div class="emoji">🔐</div>
+                <h1>Acceso Administrador</h1>
+            </div>
+            <div class="form-group">
+                <label>Contraseña</label>
+                <input type="password" id="admin-password" placeholder="Ingresa contraseña" onkeypress="if(event.key==='Enter')verifyAdmin()">
+            </div>
+            <button class="btn btn-primary" onclick="verifyAdmin()">Ingresar</button>
+            <button class="btn btn-secondary" onclick="showScreen('welcome-screen')">← Volver</button>
+        </div>
+
+        <!-- Admin -->
+        <div id="admin-screen" class="screen">
+            <button class="back-btn" onclick="showScreen('welcome-screen')">←</button>
+            <div class="header">
+                <div class="emoji">⚙️</div>
+                <h1>Panel Administración</h1>
+            </div>
+
+            <div class="info-box">
+                💡 <strong>Nota:</strong> Los cambios se guardan en Google Sheets y se sincronizan automáticamente con todos los usuarios.
+            </div>
+
+            <!-- Google Sheets URL -->
+            <div class="admin-section">
+                <h3>🔗 Google Sheets URL</h3>
+                <div class="form-group">
+                    <input type="url" id="sheets-url" placeholder="https://script.google.com/.../exec">
+                </div>
+                <button class="btn btn-success" onclick="saveSheetsURL()">💾 Guardar URL</button>
+                <p style="font-size:11px; color:#666; margin-top:8px;">
+                    ⚠️ La URL debe terminar en <code>/exec</code> y tener acceso "Cualquier persona"
+                </p>
+            </div>
+
+            <!-- CAMBIAR CONTRASEÑA -->
+            <div class="admin-section">
+                <h3>🔐 Cambiar Contraseña</h3>
+                <div class="form-group">
+                    <label>Contraseña Actual</label>
+                    <input type="password" id="current-password" placeholder="Contraseña actual">
+                </div>
+                <div class="form-group">
+                    <label>Nueva Contraseña</label>
+                    <input type="password" id="new-password" placeholder="Nueva contraseña" oninput="checkPasswordStrength()">
+                    <div class="password-strength" id="password-strength"></div>
+                </div>
+                <div class="form-group">
+                    <label>Confirmar Nueva Contraseña</label>
+                    <input type="password" id="confirm-password" placeholder="Confirma nueva contraseña">
+                </div>
+                <button class="btn btn-success" onclick="changePassword()">🔑 Cambiar Contraseña</button>
+            </div>
+
+            <!-- Sucursales -->
+            <div class="admin-section">
+                <h3>🏪 Sucursales con Estimados</h3>
+                <div class="add-row">
+                    <input type="text" id="new-branch-name" placeholder="Nombre sucursal">
+                    <input type="number" id="new-branch-bs" placeholder="Est. Bs" style="width:100px;">
+                    <input type="number" id="new-branch-units" placeholder="Est. Uds" style="width:100px;">
+                    <button class="btn btn-success" onclick="addBranch()">+ Agregar</button>
+                </div>
+                <div id="branches-container"></div>
+            </div>
+
+            <!-- Asesoras -->
+            <div class="admin-section">
+                <h3>👥 Asesoras</h3>
+                <div class="add-row">
+                    <input type="text" id="new-advisor" placeholder="Nombre asesora">
+                    <button class="btn btn-success" onclick="addAdvisor()">+ Agregar</button>
+                </div>
+                <div id="advisors-container"></div>
+            </div>
+
+            <!-- Regentes -->
+            <div class="admin-section">
+                <h3>📋 Regentes</h3>
+                <div class="add-row">
+                    <input type="text" id="new-regent" placeholder="Nombre regente">
+                    <button class="btn btn-success" onclick="addRegent()">+ Agregar</button>
+                </div>
+                <div id="regents-container"></div>
+            </div>
+
+            <!-- Marcas -->
+            <div class="admin-section">
+                <h3>🏷️ Marcas Propias</h3>
+                <div class="add-row">
+                    <input type="text" id="new-brand" placeholder="Nombre marca">
+                    <button class="btn btn-success" onclick="addBrand()">+ Agregar</button>
+                </div>
+                <div id="brands-container"></div>
+            </div>
+
+            <!-- Acciones de Evaluación -->
+            <div class="admin-section">
+                <h3>✅ Acciones de Evaluación (Regente)</h3>
+                <div class="add-row">
+                    <input type="text" id="new-action" placeholder="Nueva acción" style="flex:3;">
+                    <button class="btn btn-success" onclick="addAction()">+ Agregar</button>
+                </div>
+                <div id="actions-container"></div>
+            </div>
+
+            <button class="btn btn-warning" onclick="syncConfig()">🔄 Sincronizar Configuración</button>
+            <button class="btn btn-secondary" onclick="showScreen('welcome-screen')">← Salir</button>
+        </div>
+
+        <!-- Asesora Identificación -->
+        <div id="advisor-screen" class="screen">
+            <button class="back-btn" onclick="showScreen('welcome-screen')">←</button>
+            <div class="header">
+                <div class="emoji">💄</div>
+                <h1>Identificación</h1>
+            </div>
+            <div class="form-group">
+                <label>Tu Nombre *</label>
+                <select id="advisor-name-select"></select>
+            </div>
+            <div class="form-group">
+                <label>Sucursal *</label>
+                <select id="advisor-branch-select" onchange="showBranchEstimates()"></select>
+            </div>
+            <div id="estimates-card" class="branch-card" style="display:none;">
+                <h3 style="color:white; margin-bottom:15px;">📊 Tus Estimados Mensuales</h3>
+                <div class="stat-grid">
+                    <div class="stat-box" style="background:rgba(255,255,255,0.2);">
+                        <div class="label" style="color:rgba(255,255,255,0.9);">Meta en Bs</div>
+                        <div class="value" id="estimate-bs-display" style="color:#fff; font-size:28px;">Bs. 0</div>
+                    </div>
+                    <div class="stat-box" style="background:rgba(255,255,255,0.2);">
+                        <div class="label" style="color:rgba(255,255,255,0.9);">Meta en Uds</div>
+                        <div class="value" id="estimate-units-display" style="color:#fff; font-size:28px;">0 uds.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Fecha *</label>
+                <input type="date" id="advisor-date">
+            </div>
+            <button class="btn btn-primary" onclick="goToSales()">Continuar →</button>
+        </div>
+
+        <!-- Ventas -->
+        <div id="sales-screen" class="screen">
+            <button class="back-btn" onclick="showScreen('advisor-screen')">←</button>
+            <div class="header">
+                <div class="emoji">📊</div>
+                <h1>Tu Meta del Mes</h1>
+            </div>
+            <div class="card">
+                <h3>📊 Ventas en Bolivianos</h3>
+                <div class="stat-box">
+                    <div class="label">Estimado del Mes</div>
+                    <div class="value" id="monthly-bs">Bs. 0</div>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" id="progress-bs" style="width:0%"></div></div>
+                <div class="form-group">
+                    <label>Venta del Día (Bs.)</label>
+                    <input type="number" id="daily-bs" oninput="calcProgress()" placeholder="0" min="0">
+                </div>
+                <div class="stat-box">
+                    <div class="label">Cumplimiento</div>
+                    <div class="value" id="compliance-bs">0%</div>
+                </div>
+            </div>
+            <div class="card">
+                <h3>📦 Ventas en Unidades</h3>
+                <div class="stat-box">
+                    <div class="label">Estimado del Mes</div>
+                    <div class="value" id="monthly-units">0 uds.</div>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" id="progress-units" style="width:0%"></div></div>
+                <div class="form-group">
+                    <label>Venta del Día (Uds.)</label>
+                    <input type="number" id="daily-units" oninput="calcProgressUnits()" placeholder="0" min="0">
+                </div>
+                <div class="stat-box">
+                    <div class="label">Cumplimiento</div>
+                    <div class="value" id="compliance-units">0%</div>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <button class="btn btn-secondary" onclick="showScreen('advisor-screen')">← Atrás</button>
+                <button class="btn btn-primary" onclick="goToConversion()">Continuar →</button>
+            </div>
+        </div>
+
+        <!-- Conversión -->
+        <div id="conversion-screen" class="screen">
+            <button class="back-btn" onclick="showScreen('sales-screen')">←</button>
+            <div class="header">
+                <div class="emoji">📈</div>
+                <h1>Tasa de Conversión</h1>
+            </div>
+            <div class="card">
+                <h3>✅ Con Compra</h3>
+                <div class="counter">
+                    <button onclick="updateCounter('with', -1)">−</button>
+                    <span id="with-purchase">0</span>
+                    <button onclick="updateCounter('with', 1)">+</button>
+                </div>
+            </div>
+            <div class="card">
+                <h3>❌ Sin Compra</h3>
+                <div class="counter">
+                    <button onclick="updateCounter('without', -1)">−</button>
+                    <span id="without-purchase">0</span>
+                    <button onclick="updateCounter('without', 1)">+</button>
+                </div>
+            </div>
+            <div class="card">
+                <div class="stat-grid">
+                    <div class="stat-box">
+                        <div class="label">Total Atendidos</div>
+                        <div class="value" id="total-attended">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="label">Tasa Conversión</div>
+                        <div class="value" id="conversion-rate">0%</div>
+                    </div>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <button class="btn btn-secondary" onclick="showScreen('sales-screen')">← Atrás</button>
+                <button class="btn btn-primary" onclick="goToBrands()">Continuar →</button>
+            </div>
+        </div>
+
+        <!-- Marcas -->
+        <div id="brands-screen" class="screen">
+            <button class="back-btn" onclick="showScreen('conversion-screen')">←</button>
+            <div class="header">
+                <div class="emoji">🏷️</div>
+                <h1>Marca Propia</h1>
+            </div>
+            <div id="brands-counters-container"></div>
+            <div class="total-brands-box">
+                <div class="label">Total uds. marca propia</div>
+                <div class="value" id="total-brands-units">0</div>
+            </div>
+            <div class="nav-buttons">
+                <button class="btn btn-secondary" onclick="showScreen('conversion-screen')">← Atrás</button>
+                <button class="btn btn-success" onclick="submitRecord()">✓ Enviar Registro</button>
+            </div>
+        </div>
+
+        <!-- Resumen -->
+        <div id="summary-screen" class="screen">
+            <div class="header">
+                <div class="emoji">✅</div>
+                <h1>¡Registro Enviado!</h1>
+            </div>
+            <div class="card">
+                <h3>📋 Resumen</h3>
+                <div class="stat-grid">
+                    <div class="stat-box"><div class="label">Cumpl. Bs</div><div class="value" id="summary-bs">0%</div></div>
+                    <div class="stat-box"><div class="label">Cumpl. Uds</div><div class="value" id="summary-units">0%</div></div>
+                    <div class="stat-box"><div class="label">Venta Día</div><div class="value" id="summary-daily">Bs. 0</div></div>
+                    <div class="stat-box"><div class="label">Clientes</div><div class="value" id="summary-clients">0</div></div>
+                    <div class="stat-box"><div class="label">Conversión</div><div class="value" id="summary-conversion">0%</div></div>
+                    <div class="stat-box"><div class="label">Marcas</div><div class="value" id="summary-brands">0</div></div>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="showScreen('welcome-screen')">+ Nuevo Registro</button>
+        </div>
+
+        <!-- Regente -->
+        <div id="regent-screen" class="screen">
+            <button class="back-btn" onclick="showScreen('welcome-screen')">←</button>
+            <div class="header">
+                <div class="emoji">📋</div>
+                <h1>Evaluación Semanal</h1>
+            </div>
+            <div class="form-group">
+                <label>Regente *</label>
+                <select id="regent-name-select"></select>
+            </div>
+            <div class="form-group">
+                <label>Asesora *</label>
+                <select id="regent-advisor-select"></select>
+            </div>
+            <div class="form-group">
+                <label>Sucursal *</label>
+                <select id="regent-branch-select"></select>
+            </div>
+            <div class="form-group">
+                <label>Fecha</label>
+                <input type="date" id="regent-date">
+            </div>
+            <button class="btn btn-primary" onclick="startEvaluation()">Comenzar →</button>
+        </div>
+
+        <!-- Evaluación -->
+        <div id="evaluation-screen" class="screen">
+            <button class="back-btn" onclick="showScreen('regent-screen')">←</button>
+            <div class="header">
+                <div class="emoji">✅</div>
+                <h1>Evaluación de Acciones</h1>
+            </div>
+            <div id="evaluation-actions-container"></div>
+            <div class="card">
+                <div class="stat-grid">
+                    <div class="stat-box"><div class="label">Calificación</div><div class="value" id="eval-score">0%</div></div>
+                    <div class="stat-box"><div class="label">SI / Total</div><div class="value" id="eval-count">0/0</div></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Observaciones</label>
+                <textarea id="eval-observations" rows="3" placeholder="Opcional"></textarea>
+            </div>
+            <div class="nav-buttons">
+                <button class="btn btn-secondary" onclick="showScreen('regent-screen')">← Atrás</button>
+                <button class="btn btn-success" onclick="submitEvaluation()">✓ Enviar</button>
+            </div>
+        </div>
+
+        <!-- Evaluación Enviada -->
+        <div id="evaluation-sent-screen" class="screen">
+            <div class="header">
+                <div class="emoji">✅</div>
+                <h1>¡Evaluación Enviada!</h1>
+            </div>
+            <div class="card">
+                <div class="stat-grid">
+                    <div class="stat-box"><div class="label">Calificación</div><div class="value" id="final-score">0%</div></div>
+                    <div class="stat-box"><div class="label">Sí</div><div class="value" id="final-yes">0</div></div>
+                    <div class="stat-box"><div class="label">No</div><div class="value" id="final-no">0</div></div>
+                    <div class="stat-box"><div class="label">N/A</div><div class="value" id="final-na">0</div></div>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="showScreen('welcome-screen')">+ Nueva Evaluación</button>
+        </div>
+    </div>
+
+    <!-- Modal Editar Sucursal -->
+    <div id="edit-branch-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeBranchModal()">×</span>
+            <h3>Editar Sucursal</h3>
+            <div class="form-group">
+                <label>Nombre</label>
+                <input type="text" id="edit-branch-name">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Estimado Bs</label>
+                    <input type="number" id="edit-branch-bs" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Estimado Uds</label>
+                    <input type="number" id="edit-branch-units" min="0">
+                </div>
+            </div>
+            <input type="hidden" id="edit-branch-index">
+            <button class="btn btn-success" onclick="saveBranchEdit()">💾 Guardar</button>
+        </div>
+    </div>
+
+    <!-- Modal Editar Genérico -->
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeEditModal()">×</span>
+            <h3 id="edit-modal-title">Editar</h3>
+            <div class="form-group">
+                <input type="text" id="edit-generic-input" placeholder="Nombre">
+            </div>
+            <input type="hidden" id="edit-generic-type">
+            <input type="hidden" id="edit-generic-index">
+            <button class="btn btn-success" onclick="saveGenericEdit()">💾 Guardar</button>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // ============================================
+        // DATOS INICIALES
+        // ============================================
+        let data = {
+            branches: [],
+            advisors: [],
+            regents: [],
+            brands: [],
+            actions: [],
+            sheetsURL: '',
+            password: 'beauty2024'
+        };
+
+        let currentEstimates = {bs: 0, units: 0};
+        let withPurchase = 0;
+        let withoutPurchase = 0;
+        let brandUnits = {};
+        let evalData = {};
+        let configLoaded = false;
+
+        // ============================================
+        // CARGAR/GUARDAR LOCAL STORAGE
+        // ============================================
+        function loadData() {
+            try {
+                const saved = localStorage.getItem('beautyData');
+                if (saved) {
+                    const localData = JSON.parse(saved);
+                    data.sheetsURL = localData.sheetsURL || '';
+                    // No cargamos configuración desde localStorage, solo URL
+                }
+            } catch(e) { console.error('Error cargando datos:', e); }
+        }
+
+        function saveData() {
+            try {
+                localStorage.setItem('beautyData', JSON.stringify({
+                    sheetsURL: data.sheetsURL
+                }));
+            } catch(e) { console.error('Error guardando datos:', e); }
+        }
+
+        // ============================================
+        // CARGAR CONFIGURACIÓN DESDE SHEETS
+        // ============================================
+        async function loadConfigFromSheets() {
+            if (!data.sheetsURL) {
+                document.getElementById('loading-text').textContent = 'Configurando...';
+                return false;
+            }
+
+            try {
+                document.getElementById('loading-text').textContent = 'Sincronizando con Google Sheets...';
+                
+                const response = await fetch(data.sheetsURL + '?action=getConfig');
+                const config = await response.json();
+                
+                if (config.branches) data.branches = config.branches;
+                if (config.advisors) data.advisors = config.advisors;
+                if (config.regents) data.regents = config.regents;
+                if (config.brands) data.brands = config.brands;
+                if (config.actions) data.actions = config.actions;
+                if (config.password) data.password = config.password;
+                
+                configLoaded = true;
+                updateSyncStatus('success', 'Configuración sincronizada');
+                return true;
+                
+            } catch (err) {
+                console.error('Error cargando configuración:', err);
+                updateSyncStatus('error', 'Error al sincronizar - Usando datos locales');
+                return false;
+            }
+        }
+
+        // ============================================
+        // GUARDAR CONFIGURACIÓN EN SHEETS
+        // ============================================
+        async function saveConfigToSheets() {
+            if (!data.sheetsURL) {
+                showToast('❌ Configura la URL de Google Sheets primero');
+                return false;
+            }
+
+            try {
+                showToast('💾 Guardando configuración...');
+                
+                await fetch(data.sheetsURL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({
+                        action: 'saveConfig',
+                        config: data
+                    })
+                });
+                
+                showToast('✅ Configuración guardada en Sheets');
+                return true;
+                
+            } catch (err) {
+                console.error('Error guardando configuración:', err);
+                showToast('⚠️ Error al guardar en Sheets');
+                return false;
+            }
+        }
+
+        function updateSyncStatus(status, message) {
+            const statusEl = document.getElementById('sync-status');
+            if (statusEl) {
+                statusEl.textContent = message;
+                statusEl.className = 'sync-status ' + status;
+            }
+        }
+
+        // ============================================
+        // NAVEGACIÓN ENTRE PANTALLAS
+        // ============================================
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            
+            if (id === 'admin-screen') { renderAdmin(); }
+            if (id === 'advisor-screen') { loadAdvisorSelects(); document.getElementById('advisor-date').valueAsDate = new Date(); }
+            if (id === 'regent-screen') { loadRegentSelects(); document.getElementById('regent-date').valueAsDate = new Date(); }
+            if (id === 'welcome-screen') { 
+                resetAll();
+                if (configLoaded) {
+                    updateSyncStatus('success', 'Configuración actualizada');
+                }
+            }
+        }
+
+        function resetAll() {
+            withPurchase = 0;
+            withoutPurchase = 0;
+            brandUnits = {};
+            document.getElementById('with-purchase').textContent = '0';
+            document.getElementById('without-purchase').textContent = '0';
+            document.getElementById('total-attended').textContent = '0';
+            document.getElementById('conversion-rate').textContent = '0%';
+            document.getElementById('daily-bs').value = '';
+            document.getElementById('daily-units').value = '';
+            document.getElementById('compliance-bs').textContent = '0%';
+            document.getElementById('compliance-units').textContent = '0%';
+            document.getElementById('progress-bs').style.width = '0%';
+            document.getElementById('progress-units').style.width = '0%';
+        }
+
+        // ============================================
+        // ADMIN - AUTENTICACIÓN
+        // ============================================
+        function verifyAdmin() {
+            const pass = document.getElementById('admin-password').value;
+            if (pass === data.password) {
+                document.getElementById('admin-password').value = '';
+                showScreen('admin-screen');
+                showToast('✅ Acceso concedido');
+            } else {
+                showToast('❌ Contraseña incorrecta');
+            }
+        }
+
+        async function changePassword() {
+            const current = document.getElementById('current-password').value;
+            const newPass = document.getElementById('new-password').value;
+            const confirm = document.getElementById('confirm-password').value;
+
+            if (current !== data.password) { showToast('❌ Contraseña actual incorrecta'); return; }
+            if (newPass.length < 6) { showToast('❌ Mínimo 6 caracteres'); return; }
+            if (newPass !== confirm) { showToast('❌ Las contraseñas no coinciden'); return; }
+
+            data.password = newPass;
+            saveData();
+            await saveConfigToSheets();
+            
+            document.getElementById('current-password').value = '';
+            document.getElementById('new-password').value = '';
+            document.getElementById('confirm-password').value = '';
+            document.getElementById('password-strength').textContent = '';
+            showToast('✅ Contraseña cambiada exitosamente');
+        }
+
+        function checkPasswordStrength() {
+            const pass = document.getElementById('new-password').value;
+            const div = document.getElementById('password-strength');
+            if (!pass) { div.textContent = ''; return; }
+            
+            let strength = 'weak', msg = '🔴 Débil';
+            if (pass.length >= 8) { strength = 'medium'; msg = '🟡 Media'; }
+            if (pass.length >= 10 && /[A-Z]/.test(pass) && /[0-9]/.test(pass) && /[!@#$%^&*]/.test(pass)) { 
+                strength = 'strong'; msg = '🟢 Fuerte ✓'; 
+            }
+            div.textContent = 'Fortaleza: ' + msg;
+            div.className = 'password-strength ' + strength;
+        }
+
+        // ============================================
+        // ADMIN - RENDERIZADO
+        // ============================================
+        function renderAdmin() {
+            // Sucursales
+            const branchesContainer = document.getElementById('branches-container');
+            branchesContainer.innerHTML = '';
+            if (data.branches.length === 0) {
+                branchesContainer.innerHTML = '<p style="color:#666; text-align:center; padding:10px;">Sin sucursales</p>';
+            } else {
+                data.branches.forEach((b, i) => {
+                    branchesContainer.innerHTML += `
+                        <div class="list-item">
+                            <div class="list-item-header">
+                                <strong>🏪 ${b.Nombre || b.name}</strong>
+                                <div class="list-item-actions">
+                                    <button class="edit-btn" onclick="openBranchEdit(${i})">✏️</button>
+                                    <button class="delete-btn" onclick="deleteBranch(${i})">🗑️</button>
+                                </div>
+                            </div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; font-size:13px;">
+                                <div>💵 Bs: <strong>Bs. ${(b.Estimated_Bs || b.bs || 0).toLocaleString()}</strong></div>
+                                <div>📦 Uds: <strong>${b.Estimated_Units || b.units || 0} uds.</strong></div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            renderAdminList('advisors-container', data.advisors, 'advisor', '👤');
+            renderAdminList('regents-container', data.regents, 'regent', '📋');
+            renderAdminList('brands-container', data.brands, 'brand', '🏷️');
+
+            const actionsContainer = document.getElementById('actions-container');
+            actionsContainer.innerHTML = '';
+            if (data.actions.length === 0) {
+                actionsContainer.innerHTML = '<p style="color:#666; text-align:center; padding:10px;">Sin acciones</p>';
+            } else {
+                data.actions.forEach((a, i) => {
+                    actionsContainer.innerHTML += `
+                        <div class="list-item">
+                            <div class="list-item-header">
+                                <span style="font-size:13px; flex:1;">${i+1}. ${a.Accion || a}</span>
+                                <div class="list-item-actions">
+                                    <button class="edit-btn" onclick="openGenericEdit('action', ${i})">✏️</button>
+                                    <button class="delete-btn" onclick="deleteAction(${i})">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            document.getElementById('sheets-url').value = data.sheetsURL;
+        }
+
+        function renderAdminList(containerId, arr, type, emoji) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            if (arr.length === 0) {
+                container.innerHTML = '<p style="color:#666; text-align:center; padding:10px;">Sin registros</p>';
+                return;
+            }
+            arr.forEach((item, i) => {
+                const itemName = typeof item === 'object' ? (item.Nombre || item.name || item.Accion || '') : item;
+                container.innerHTML += `
+                    <div class="list-item">
+                        <div class="list-item-header">
+                            <span>${emoji} ${itemName}</span>
+                            <div class="list-item-actions">
+                                <button class="edit-btn" onclick="openGenericEdit('${type}', ${i})">✏️</button>
+                                <button class="delete-btn" onclick="deleteItem('${type}', ${i})">🗑️</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // ============================================
+        // ADMIN - SUCURSALES
+        // ============================================
+        async function addBranch() {
+            const name = document.getElementById('new-branch-name').value.trim();
+            const bs = parseFloat(document.getElementById('new-branch-bs').value) || 30000;
+            const units = parseFloat(document.getElementById('new-branch-units').value) || 300;
+            
+            if (!name) { showToast('❌ Ingresa un nombre para la sucursal'); return; }
+            
+            data.branches.push({ Nombre: name, Estimated_Bs: bs, Estimated_Units: units });
+            await saveConfigToSheets();
+            renderAdmin();
+            
+            document.getElementById('new-branch-name').value = '';
+            document.getElementById('new-branch-bs').value = '';
+            document.getElementById('new-branch-units').value = '';
+            showToast('✅ Sucursal agregada');
+        }
+
+        async function deleteBranch(i) {
+            if (confirm('¿Eliminar esta sucursal?')) {
+                data.branches.splice(i, 1);
+                await saveConfigToSheets();
+                renderAdmin();
+                showToast('✅ Sucursal eliminada');
+            }
+        }
+
+        function openBranchEdit(i) {
+            const branch = data.branches[i];
+            document.getElementById('edit-branch-index').value = i;
+            document.getElementById('edit-branch-name').value = branch.Nombre || branch.name || '';
+            document.getElementById('edit-branch-bs').value = branch.Estimated_Bs || branch.bs || 0;
+            document.getElementById('edit-branch-units').value = branch.Estimated_Units || branch.units || 0;
+            document.getElementById('edit-branch-modal').classList.add('active');
+        }
+
+        function closeBranchModal() {
+            document.getElementById('edit-branch-modal').classList.remove('active');
+        }
+
+        async function saveBranchEdit() {
+            const i = parseInt(document.getElementById('edit-branch-index').value);
+            const name = document.getElementById('edit-branch-name').value.trim();
+            if (!name) { showToast('❌ Ingresa un nombre'); return; }
+            
+            data.branches[i].Nombre = name;
+            data.branches[i].Estimated_Bs = parseFloat(document.getElementById('edit-branch-bs').value) || 0;
+            data.branches[i].Estimated_Units = parseFloat(document.getElementById('edit-branch-units').value) || 0;
+            
+            await saveConfigToSheets();
+            renderAdmin();
+            closeBranchModal();
+            showToast('✅ Cambios guardados');
+        }
+
+        // ============================================
+        // ADMIN - LISTAS GENÉRICAS
+        // ============================================
+        async function addAdvisor() { await addItemToList('advisor', 'new-advisor', 'Asesora', data.advisors); }
+        async function addRegent() { await addItemToList('regent', 'new-regent', 'Regente', data.regents); }
+        async function addBrand() { await addItemToList('brand', 'new-brand', 'Marca', data.brands); }
+        async function addAction() { await addItemToList('action', 'new-action', 'Acción', data.actions); }
+
+        async function addItemToList(type, inputId, label, array) {
+            const name = document.getElementById(inputId).value.trim();
+            if (!name) { showToast(`❌ Ingresa un nombre para ${label.toLowerCase()}`); return; }
+            
+            array.push(name);
+            await saveConfigToSheets();
+            renderAdmin();
+            document.getElementById(inputId).value = '';
+            showToast(`✅ ${label} agregada`);
+        }
+
+        async function deleteItem(type, i) {
+            if (!confirm('¿Eliminar este elemento?')) return;
+            
+            if (type === 'advisor') data.advisors.splice(i, 1);
+            else if (type === 'regent') data.regents.splice(i, 1);
+            else if (type === 'brand') data.brands.splice(i, 1);
+            else if (type === 'action') data.actions.splice(i, 1);
+            
+            await saveConfigToSheets();
+            renderAdmin();
+            showToast('✅ Elemento eliminado');
+        }
+
+        function openGenericEdit(type, i) {
+            document.getElementById('edit-generic-type').value = type;
+            document.getElementById('edit-generic-index').value = i;
+            document.getElementById('edit-modal-title').textContent = 'Editar ' + type.charAt(0).toUpperCase() + type.slice(1);
+            
+            let arr;
+            if (type === 'advisor') arr = data.advisors;
+            else if (type === 'regent') arr = data.regents;
+            else if (type === 'brand') arr = data.brands;
+            else if (type === 'action') arr = data.actions;
+            
+            const item = arr[i];
+            document.getElementById('edit-generic-input').value = typeof item === 'object' ? (item.Nombre || item.Accion || '') : item;
+            document.getElementById('edit-modal').classList.add('active');
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-modal').classList.remove('active');
+        }
+
+        async function saveGenericEdit() {
+            const type = document.getElementById('edit-generic-type').value;
+            const i = parseInt(document.getElementById('edit-generic-index').value);
+            const val = document.getElementById('edit-generic-input').value.trim();
+            if (!val) { showToast('❌ Ingresa un valor'); return; }
+            
+            let arr;
+            if (type === 'advisor') arr = data.advisors;
+            else if (type === 'regent') arr = data.regents;
+            else if (type === 'brand') arr = data.brands;
+            else if (type === 'action') arr = data.actions;
+            
+            arr[i] = val;
+            await saveConfigToSheets();
+            renderAdmin();
+            closeEditModal();
+            showToast('✅ Cambios guardados');
+        }
+
+        async function saveSheetsURL() {
+            const url = document.getElementById('sheets-url').value.trim();
+            if (url && !url.includes('/exec')) {
+                if (!confirm('⚠️ La URL no parece terminar en /exec. ¿Guardar de todas formas?')) return;
+            }
+            data.sheetsURL = url;
+            saveData();
+            showToast('✅ URL de Google Sheets guardada');
+        }
+
+        async function syncConfig() {
+            showToast('🔄 Sincronizando...');
+            const success = await loadConfigFromSheets();
+            if (success) {
+                renderAdmin();
+                showToast('✅ Configuración sincronizada');
+            }
+        }
+
+        // ============================================
+        // ASESORA - SELECTS Y ESTIMADOS
+        // ============================================
+        function loadAdvisorSelects() {
+            const nameSelect = document.getElementById('advisor-name-select');
+            const branchSelect = document.getElementById('advisor-branch-select');
+            
+            nameSelect.innerHTML = '<option value="">Selecciona tu nombre</option>';
+            data.advisors.forEach(a => { 
+                const name = typeof a === 'object' ? (a.Nombre || a.name) : a;
+                nameSelect.innerHTML += `<option value="${name}">${name}</option>`; 
+            });
+            
+            branchSelect.innerHTML = '<option value="">Selecciona sucursal</option>';
+            data.branches.forEach((b, i) => {
+                const name = b.Nombre || b.name || 'Sin nombre';
+                const bs = b.Estimated_Bs || b.bs || 0;
+                const units = b.Estimated_Units || b.units || 0;
+                branchSelect.innerHTML += `<option value="${i}" data-bs="${bs}" data-units="${units}">${name}</option>`;
+            });
+            document.getElementById('estimates-card').style.display = 'none';
+        }
+
+        function showBranchEstimates() {
+            const select = document.getElementById('advisor-branch-select');
+            const option = select.options[select.selectedIndex];
+            if (option.value) {
+                const bs = parseFloat(option.getAttribute('data-bs')) || 0;
+                const units = parseFloat(option.getAttribute('data-units')) || 0;
+                currentEstimates = {bs, units};
+                document.getElementById('estimate-bs-display').textContent = 'Bs. ' + bs.toLocaleString();
+                document.getElementById('estimate-units-display').textContent = units + ' uds.';
+                document.getElementById('estimates-card').style.display = 'block';
+            } else {
+                document.getElementById('estimates-card').style.display = 'none';
+            }
+        }
+
+        function goToSales() {
+            const name = document.getElementById('advisor-name-select').value;
+            const branchIdx = document.getElementById('advisor-branch-select').value;
+            if (!name || !branchIdx) { showToast('❌ Selecciona tu nombre y sucursal'); return; }
+            
+            const branch = data.branches[branchIdx];
+            sessionStorage.setItem('advisorData', JSON.stringify({
+                name, 
+                branch: branch.Nombre || branch.name,
+                estimates: {
+                    bs: branch.Estimated_Bs || branch.bs || 0,
+                    units: branch.Estimated_Units || branch.units || 0
+                }
+            }));
+            
+            document.getElementById('monthly-bs').textContent = 'Bs. ' + currentEstimates.bs.toLocaleString();
+            document.getElementById('monthly-units').textContent = currentEstimates.units + ' uds.';
+            showScreen('sales-screen');
+        }
+
+        function calcProgress() {
+            const daily = parseFloat(document.getElementById('daily-bs').value) || 0;
+            const compliance = currentEstimates.bs > 0 ? (daily / currentEstimates.bs * 100) : 0;
+            document.getElementById('compliance-bs').textContent = compliance.toFixed(1) + '%';
+            document.getElementById('progress-bs').style.width = Math.min(compliance, 100) + '%';
+        }
+
+        function calcProgressUnits() {
+            const daily = parseFloat(document.getElementById('daily-units').value) || 0;
+            const compliance = currentEstimates.units > 0 ? (daily / currentEstimates.units * 100) : 0;
+            document.getElementById('compliance-units').textContent = compliance.toFixed(1) + '%';
+            document.getElementById('progress-units').style.width = Math.min(compliance, 100) + '%';
+        }
+
+        function goToConversion() { showScreen('conversion-screen'); }
+
+        function updateCounter(type, change) {
+            if (type === 'with') { 
+                withPurchase = Math.max(0, withPurchase + change); 
+                document.getElementById('with-purchase').textContent = withPurchase; 
+            } else { 
+                withoutPurchase = Math.max(0, withoutPurchase + change); 
+                document.getElementById('without-purchase').textContent = withoutPurchase; 
+            }
+            const total = withPurchase + withoutPurchase;
+            document.getElementById('total-attended').textContent = total;
+            document.getElementById('conversion-rate').textContent = total > 0 ? ((withPurchase / total * 100).toFixed(1) + '%') : '0%';
+        }
+
+        function goToBrands() {
+            const container = document.getElementById('brands-counters-container');
+            container.innerHTML = '';
+            brandUnits = {};
+            
+            if (data.brands.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#666; padding:20px;">No hay marcas configuradas. Contacta al administrador.</p>';
+            } else {
+                data.brands.forEach(brand => {
+                    const brandName = typeof brand === 'object' ? (brand.Nombre || brand.name) : brand;
+                    brandUnits[brandName] = 0;
+                    const safeId = brandName.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
+                    container.innerHTML += `
+                        <div class="brand-item">
+                            <span class="brand-name"><strong>${brandName}</strong></span>
+                            <div class="brand-counter">
+                                <button onclick="updateBrandUnit('${brandName}', -1)">−</button>
+                                <span id="brand-${safeId}">0</span>
+                                <button onclick="updateBrandUnit('${brandName}', 1)">+</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            updateTotalBrands();
+            showScreen('brands-screen');
+        }
+
+        function updateBrandUnit(brand, change) {
+            brandUnits[brand] = Math.max(0, brandUnits[brand] + change);
+            const safeId = brand.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
+            document.getElementById('brand-' + safeId).textContent = brandUnits[brand];
+            updateTotalBrands();
+        }
+
+        function updateTotalBrands() {
+            const total = Object.values(brandUnits).reduce((sum, v) => sum + v, 0);
+            document.getElementById('total-brands-units').textContent = total;
+        }
+
+        // ============================================
+        // ENVIAR REGISTRO A SHEETS
+        // ============================================
+        async function submitRecord() {
+            const advisorData = JSON.parse(sessionStorage.getItem('advisorData'));
+            if (!advisorData) { showToast('❌ Error de sesión'); showScreen('welcome-screen'); return; }
+            
+            const dailyBs = parseFloat(document.getElementById('daily-bs').value) || 0;
+            const dailyUnits = parseFloat(document.getElementById('daily-units').value) || 0;
+            
+            // Calcular cumplimiento
+            const complianceBs = currentEstimates.bs > 0 ? ((dailyBs / currentEstimates.bs) * 100).toFixed(1) : '0.0';
+            const complianceUnits = currentEstimates.units > 0 ? ((dailyUnits / currentEstimates.units) * 100).toFixed(1) : '0.0';
+            
+            // Calcular total de clientes
+            const totalClientes = withPurchase + withoutPurchase;
+            
+            // Obtener marcas como OBJETO y ARRAY
+            const marcasObj = {};
+            const marcasArray = [];
+            let totalMarcas = 0;
+            
+            data.brands.forEach(brand => {
+                const brandName = typeof brand === 'object' ? (brand.Nombre || brand.name) : brand;
+                const cantidad = brandUnits[brandName] || 0;
+                marcasObj[brandName] = cantidad;
+                marcasArray.push(brandName);
+                totalMarcas += cantidad;
+            });
+
+            const record = {
+                tipo: 'venta',
+                fecha: new Date().toISOString(),
+                nombre: advisorData.name,
+                sucursal: advisorData.branch,
+                ventaBs: dailyBs,
+                ventaUds: dailyUnits,
+                conCompra: withPurchase,
+                sinCompra: withoutPurchase,
+                totalClientes: totalClientes,
+                conversion: document.getElementById('conversion-rate').textContent,
+                marcasObj: marcasObj,
+                marcasData: marcasArray,
+                marcas: totalMarcas,
+                estimadoBs: currentEstimates.bs,
+                estimadoUds: currentEstimates.units,
+                cumplimientoBs: complianceBs + '%',
+                cumplimientoUds: complianceUnits + '%'
+            };
+
+            // Enviar a Google Sheets
+            if (data.sheetsURL) {
+                try {
+                    showToast('📤 Enviando...');
+                    
+                    await fetch(data.sheetsURL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'text/plain' },
+                        body: JSON.stringify(record)
+                    });
+                    
+                    showToast('✅ Registro enviado a Google Sheets');
+                    
+                } catch (err) {
+                    console.error('Error enviando a Sheets:', err);
+                    showToast('⚠️ Error al enviar');
+                }
+            } else {
+                showToast('❌ Configura URL de Sheets');
+                return;
+            }
+
+            // Mostrar resumen
+            document.getElementById('summary-bs').textContent = complianceBs + '%';
+            document.getElementById('summary-units').textContent = complianceUnits + '%';
+            document.getElementById('summary-daily').textContent = 'Bs. ' + dailyBs.toLocaleString();
+            document.getElementById('summary-clients').textContent = totalClientes;
+            document.getElementById('summary-conversion').textContent = document.getElementById('conversion-rate').textContent;
+            document.getElementById('summary-brands').textContent = totalMarcas;
+
+            showScreen('summary-screen');
+        }
+
+        // ============================================
+        // REGENTE - EVALUACIONES
+        // ============================================
+        function loadRegentSelects() {
+            document.getElementById('regent-name-select').innerHTML = 
+                '<option value="">Selecciona regente</option>' + 
+                data.regents.map(r => {
+                    const name = typeof r === 'object' ? (r.Nombre || r.name) : r;
+                    return `<option value="${name}">${name}</option>`;
+                }).join('');
+                
+            document.getElementById('regent-advisor-select').innerHTML = 
+                '<option value="">Selecciona asesora</option>' + 
+                data.advisors.map(a => {
+                    const name = typeof a === 'object' ? (a.Nombre || a.name) : a;
+                    return `<option value="${name}">${name}</option>`;
+                }).join('');
+                
+            document.getElementById('regent-branch-select').innerHTML = 
+                '<option value="">Selecciona sucursal</option>' + 
+                data.branches.map(b => {
+                    const name = b.Nombre || b.name || 'Sin nombre';
+                    return `<option value="${name}">${name}</option>`;
+                }).join('');
+        }
+
+        function startEvaluation() {
+            const regent = document.getElementById('regent-name-select').value;
+            const advisor = document.getElementById('regent-advisor-select').value;
+            const branch = document.getElementById('regent-branch-select').value;
+            
+            if (!regent || !advisor || !branch) { showToast('❌ Completa todos los campos'); return; }
+
+            evalData = {regent, advisor, branch, actions: {}};
+            const container = document.getElementById('evaluation-actions-container');
+            container.innerHTML = '';
+            
+            if (data.actions.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#666; padding:20px;">No hay acciones configuradas.</p>';
+            } else {
+                data.actions.forEach((action, i) => {
+                    const actionText = typeof action === 'object' ? (action.Accion || action.accion) : action;
+                    container.innerHTML += `
+                        <div class="evaluation-item">
+                            <h4>${i+1}. ${actionText}</h4>
+                            <div class="evaluation-options">
+                                <div class="eval-option" onclick="selectEval(${i}, 'yes', this)">SI</div>
+                                <div class="eval-option" onclick="selectEval(${i}, 'no', this)">NO</div>
+                                <div class="eval-option" onclick="selectEval(${i}, 'na', this)">N/A</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            updateEvalScore();
+            showScreen('evaluation-screen');
+        }
+
+        function selectEval(i, val, el) {
+            el.parentElement.querySelectorAll('.eval-option').forEach(o => { 
+                o.classList.remove('selected', 'yes', 'no', 'na'); 
+            });
+            el.classList.add('selected', val);
+            evalData.actions[i] = val;
+            updateEvalScore();
+        }
+
+        function updateEvalScore() {
+            const actions = evalData.actions;
+            const yes = Object.values(actions).filter(v => v === 'yes').length;
+            const total = Object.values(actions).filter(v => v !== 'na').length;
+            const score = total > 0 ? (yes / total * 100) : 0;
+            document.getElementById('eval-score').textContent = score.toFixed(0) + '%';
+            document.getElementById('eval-count').textContent = yes + '/' + total;
+        }
+
+        async function submitEvaluation() {
+            if (Object.keys(evalData.actions).length === 0) { showToast('❌ Evalúa al menos una acción'); return; }
+            
+            const yes = Object.values(evalData.actions).filter(v => v === 'yes').length;
+            const no = Object.values(evalData.actions).filter(v => v === 'no').length;
+            const na = Object.values(evalData.actions).filter(v => v === 'na').length;
+            const total = yes + no;
+            const score = total > 0 ? (yes / total * 100) : 0;
+
+            const evaluation = {
+                tipo: 'evaluacion',
+                fecha: new Date().toISOString(),
+                regente: evalData.regent,
+                asesora: evalData.advisor,
+                sucursal: evalData.branch,
+                calificacion: score.toFixed(0) + '%',
+                si: yes,
+                no: no,
+                na: na,
+                obs: document.getElementById('eval-observations').value
+            };
+
+            if (data.sheetsURL) {
+                try {
+                    showToast('📤 Enviando evaluación...');
+                    await fetch(data.sheetsURL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'text/plain' },
+                        body: JSON.stringify(evaluation)
+                    });
+                    showToast('✅ Evaluación enviada');
+                } catch (err) {
+                    console.error('Error:', err);
+                    showToast('⚠️ Error al enviar');
+                }
+            }
+
+            document.getElementById('final-score').textContent = score.toFixed(0) + '%';
+            document.getElementById('final-yes').textContent = yes;
+            document.getElementById('final-no').textContent = no;
+            document.getElementById('final-na').textContent = na;
+            showScreen('evaluation-sent-screen');
+        }
+
+        // ============================================
+        // UTILIDADES
+        // ============================================
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('active');
+            setTimeout(() => toast.classList.remove('active'), 3500);
+        }
+
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal') || e.target.classList.contains('close-modal')) {
+                document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
+            }
+        });
+
+        // ============================================
+        // INICIALIZACIÓN
+        // ============================================
+        document.addEventListener('DOMContentLoaded', async function() {
+            loadData();
+            
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('advisor-date').value = today;
+            document.getElementById('regent-date').value = today;
+            
+            // Cargar configuración desde Sheets
+            if (data.sheetsURL) {
+                const success = await loadConfigFromSheets();
+                if (success) {
+                    showScreen('welcome-screen');
+                } else {
+                    document.getElementById('loading-text').textContent = 'Error al cargar - Verifica tu conexión';
+                    setTimeout(() => showScreen('welcome-screen'), 2000);
+                }
+            } else {
+                document.getElementById('loading-text').textContent = 'Configura la URL de Google Sheets en Admin';
+                setTimeout(() => showScreen('welcome-screen'), 2000);
+            }
+        });
+    </script>
+</body>
+</html>
