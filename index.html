@@ -115,7 +115,7 @@
             <button class="btn btn-secondary" onclick="showScreen('regent-screen')">
                 <span>📋</span><span><strong>Regente</strong><br><small>Evaluación semanal</small></span>
             </button>
-            <div class="sync-status" id="sync-status">Configuración cargada correctamente</div>
+            <div class="sync-status" id="sync-status">✅ Listo para usar</div>
         </div>
 
         <!-- Login Admin -->
@@ -143,18 +143,6 @@
 
             <div class="info-box">
                 💡 <strong>Nota:</strong> Los cambios se guardan en Google Sheets y se sincronizan automáticamente con todos los usuarios.
-            </div>
-
-            <!-- Google Sheets URL -->
-            <div class="admin-section">
-                <h3>🔗 Google Sheets URL</h3>
-                <div class="form-group">
-                    <input type="url" id="sheets-url" placeholder="https://script.google.com/.../exec">
-                </div>
-                <button class="btn btn-success" onclick="saveSheetsURL()">💾 Guardar URL</button>
-                <p style="font-size:11px; color:#666; margin-top:8px;">
-                    ⚠️ La URL debe terminar en <code>/exec</code> y tener acceso "Cualquier persona"
-                </p>
             </div>
 
             <!-- CAMBIAR CONTRASEÑA -->
@@ -226,6 +214,18 @@
                     <button class="btn btn-success" onclick="addAction()">+ Agregar</button>
                 </div>
                 <div id="actions-container"></div>
+            </div>
+
+            <!-- Google Sheets URL (Solo para admin, ya configurada) -->
+            <div class="admin-section">
+                <h3>🔗 Google Sheets URL</h3>
+                <div class="form-group">
+                    <input type="url" id="sheets-url" readonly style="background:#f5f5f5;">
+                </div>
+                <p style="font-size:11px; color:#666;">
+                    ✅ URL configurada automáticamente. Solo cambia si es necesario.
+                </p>
+                <button class="btn btn-warning" onclick="updateSheetsURL()" style="margin-top:10px;">✏️ Actualizar URL</button>
             </div>
 
             <button class="btn btn-warning" onclick="syncConfig()">🔄 Sincronizar Configuración</button>
@@ -501,6 +501,11 @@
 
     <script>
         // ============================================
+        // ✅ URL DE GOOGLE SHEETS PRE-CONFIGURADA
+        // ============================================
+        const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyzID-VZe-WFmXALmWyOF9N_RUAPQDCzqAvRi04ksslp5Ai2hjMIk6iYJm_LBE3oV85-Q/exec';
+
+        // ============================================
         // DATOS INICIALES
         // ============================================
         let data = {
@@ -509,7 +514,7 @@
             regents: [],
             brands: [],
             actions: [],
-            sheetsURL: '',
+            sheetsURL: DEFAULT_SHEETS_URL,  // ✅ URL por defecto
             password: 'beauty2024'
         };
 
@@ -528,8 +533,10 @@
                 const saved = localStorage.getItem('beautyData');
                 if (saved) {
                     const localData = JSON.parse(saved);
-                    data.sheetsURL = localData.sheetsURL || '';
-                    // No cargamos configuración desde localStorage, solo URL
+                    // Mantener URL por defecto a menos que el admin la haya cambiado
+                    if (localData.sheetsURL && localData.sheetsURL !== DEFAULT_SHEETS_URL) {
+                        data.sheetsURL = localData.sheetsURL;
+                    }
                 }
             } catch(e) { console.error('Error cargando datos:', e); }
         }
@@ -565,12 +572,12 @@
                 if (config.password) data.password = config.password;
                 
                 configLoaded = true;
-                updateSyncStatus('success', 'Configuración sincronizada');
+                updateSyncStatus('success', '✅ Listo para usar');
                 return true;
                 
             } catch (err) {
                 console.error('Error cargando configuración:', err);
-                updateSyncStatus('error', 'Error al sincronizar - Usando datos locales');
+                updateSyncStatus('error', '⚠️ Sin conexión - Intenta recargar');
                 return false;
             }
         }
@@ -580,7 +587,7 @@
         // ============================================
         async function saveConfigToSheets() {
             if (!data.sheetsURL) {
-                showToast('❌ Configura la URL de Google Sheets primero');
+                showToast('❌ Error de configuración');
                 return false;
             }
 
@@ -597,12 +604,12 @@
                     })
                 });
                 
-                showToast('✅ Configuración guardada en Sheets');
+                showToast('✅ Configuración guardada');
                 return true;
                 
             } catch (err) {
                 console.error('Error guardando configuración:', err);
-                showToast('⚠️ Error al guardar en Sheets');
+                showToast('⚠️ Error al guardar');
                 return false;
             }
         }
@@ -622,13 +629,16 @@
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             
-            if (id === 'admin-screen') { renderAdmin(); }
+            if (id === 'admin-screen') { 
+                renderAdmin();
+                document.getElementById('sheets-url').value = data.sheetsURL;
+            }
             if (id === 'advisor-screen') { loadAdvisorSelects(); document.getElementById('advisor-date').valueAsDate = new Date(); }
             if (id === 'regent-screen') { loadRegentSelects(); document.getElementById('regent-date').valueAsDate = new Date(); }
             if (id === 'welcome-screen') { 
                 resetAll();
                 if (configLoaded) {
-                    updateSyncStatus('success', 'Configuración actualizada');
+                    updateSyncStatus('success', '✅ Listo para usar');
                 }
             }
         }
@@ -904,14 +914,14 @@
             showToast('✅ Cambios guardados');
         }
 
-        async function saveSheetsURL() {
-            const url = document.getElementById('sheets-url').value.trim();
-            if (url && !url.includes('/exec')) {
-                if (!confirm('⚠️ La URL no parece terminar en /exec. ¿Guardar de todas formas?')) return;
+        function updateSheetsURL() {
+            const newUrl = prompt('Nueva URL de Google Apps Script:', data.sheetsURL);
+            if (newUrl && newUrl.trim() !== '') {
+                data.sheetsURL = newUrl.trim();
+                saveData();
+                document.getElementById('sheets-url').value = data.sheetsURL;
+                showToast('✅ URL actualizada');
             }
-            data.sheetsURL = url;
-            saveData();
-            showToast('✅ URL de Google Sheets guardada');
         }
 
         async function syncConfig() {
@@ -1060,14 +1070,10 @@
             const dailyBs = parseFloat(document.getElementById('daily-bs').value) || 0;
             const dailyUnits = parseFloat(document.getElementById('daily-units').value) || 0;
             
-            // Calcular cumplimiento
             const complianceBs = currentEstimates.bs > 0 ? ((dailyBs / currentEstimates.bs) * 100).toFixed(1) : '0.0';
             const complianceUnits = currentEstimates.units > 0 ? ((dailyUnits / currentEstimates.units) * 100).toFixed(1) : '0.0';
-            
-            // Calcular total de clientes
             const totalClientes = withPurchase + withoutPurchase;
             
-            // Obtener marcas como OBJETO y ARRAY
             const marcasObj = {};
             const marcasArray = [];
             let totalMarcas = 0;
@@ -1100,30 +1106,22 @@
                 cumplimientoUds: complianceUnits + '%'
             };
 
-            // Enviar a Google Sheets
             if (data.sheetsURL) {
                 try {
                     showToast('📤 Enviando...');
-                    
                     await fetch(data.sheetsURL, {
                         method: 'POST',
                         mode: 'no-cors',
                         headers: { 'Content-Type': 'text/plain' },
                         body: JSON.stringify(record)
                     });
-                    
-                    showToast('✅ Registro enviado a Google Sheets');
-                    
+                    showToast('✅ Registro enviado');
                 } catch (err) {
-                    console.error('Error enviando a Sheets:', err);
+                    console.error('Error:', err);
                     showToast('⚠️ Error al enviar');
                 }
-            } else {
-                showToast('❌ Configura URL de Sheets');
-                return;
             }
 
-            // Mostrar resumen
             document.getElementById('summary-bs').textContent = complianceBs + '%';
             document.getElementById('summary-units').textContent = complianceUnits + '%';
             document.getElementById('summary-daily').textContent = 'Bs. ' + dailyBs.toLocaleString();
@@ -1144,14 +1142,12 @@
                     const name = typeof r === 'object' ? (r.Nombre || r.name) : r;
                     return `<option value="${name}">${name}</option>`;
                 }).join('');
-                
             document.getElementById('regent-advisor-select').innerHTML = 
                 '<option value="">Selecciona asesora</option>' + 
                 data.advisors.map(a => {
                     const name = typeof a === 'object' ? (a.Nombre || a.name) : a;
                     return `<option value="${name}">${name}</option>`;
                 }).join('');
-                
             document.getElementById('regent-branch-select').innerHTML = 
                 '<option value="">Selecciona sucursal</option>' + 
                 data.branches.map(b => {
@@ -1164,7 +1160,6 @@
             const regent = document.getElementById('regent-name-select').value;
             const advisor = document.getElementById('regent-advisor-select').value;
             const branch = document.getElementById('regent-branch-select').value;
-            
             if (!regent || !advisor || !branch) { showToast('❌ Completa todos los campos'); return; }
 
             evalData = {regent, advisor, branch, actions: {}};
@@ -1193,9 +1188,7 @@
         }
 
         function selectEval(i, val, el) {
-            el.parentElement.querySelectorAll('.eval-option').forEach(o => { 
-                o.classList.remove('selected', 'yes', 'no', 'na'); 
-            });
+            el.parentElement.querySelectorAll('.eval-option').forEach(o => o.classList.remove('selected', 'yes', 'no', 'na'));
             el.classList.add('selected', val);
             evalData.actions[i] = val;
             updateEvalScore();
@@ -1234,7 +1227,7 @@
 
             if (data.sheetsURL) {
                 try {
-                    showToast('📤 Enviando evaluación...');
+                    showToast('📤 Enviando...');
                     await fetch(data.sheetsURL, {
                         method: 'POST',
                         mode: 'no-cors',
@@ -1281,17 +1274,17 @@
             document.getElementById('advisor-date').value = today;
             document.getElementById('regent-date').value = today;
             
-            // Cargar configuración desde Sheets
+            // Cargar configuración desde Sheets (con URL pre-configurada)
             if (data.sheetsURL) {
                 const success = await loadConfigFromSheets();
                 if (success) {
                     showScreen('welcome-screen');
                 } else {
-                    document.getElementById('loading-text').textContent = 'Error al cargar - Verifica tu conexión';
-                    setTimeout(() => showScreen('welcome-screen'), 2000);
+                    document.getElementById('loading-text').textContent = 'Verifica tu conexión a internet';
+                    setTimeout(() => showScreen('welcome-screen'), 3000);
                 }
             } else {
-                document.getElementById('loading-text').textContent = 'Configura la URL de Google Sheets en Admin';
+                document.getElementById('loading-text').textContent = 'Configuración pendiente';
                 setTimeout(() => showScreen('welcome-screen'), 2000);
             }
         });
