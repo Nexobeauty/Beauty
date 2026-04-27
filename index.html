@@ -17,6 +17,7 @@
         .btn-secondary { background: #f0f0f0; color: #333; }
         .btn-danger { background: #ff4757; color: white; }
         .btn-warning { background: #ffa502; color: white; }
+        .btn-info { background: #17a2b8; color: white; }
         .form-group { margin: 20px 0; }
         .form-group label { display: block; margin-bottom: 8px; color: #333; font-weight: 600; }
         .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; }
@@ -115,6 +116,9 @@
             <button class="btn btn-secondary" onclick="showScreen('regent-screen')">
                 <span>📋</span><span><strong>Regente</strong><br><small>Evaluación semanal</small></span>
             </button>
+            <button class="btn btn-info" onclick="showScreen('lider-screen')">
+                <span>👔</span><span><strong>Líder de Sala</strong><br><small>Evaluación semanal</small></span>
+            </button>
             <div class="sync-status" id="sync-status">✅ Listo para usar</div>
         </div>
 
@@ -142,7 +146,7 @@
             </div>
 
             <div class="info-box">
-                💡 <strong>Nota:</strong> Los cambios se guardan en Google Sheets y se sincronizan automáticamente con todos los usuarios.
+                💡 <strong>Nota:</strong> Los cambios se guardan en Google Sheets y se sincronizan automáticamente.
             </div>
 
             <!-- CAMBIAR CONTRASEÑA -->
@@ -196,6 +200,16 @@
                 <div id="regents-container"></div>
             </div>
 
+            <!-- Líderes de Sala -->
+            <div class="admin-section">
+                <h3>👔 Líderes de Sala</h3>
+                <div class="add-row">
+                    <input type="text" id="new-leader" placeholder="Nombre líder">
+                    <button class="btn btn-success" onclick="addLeader()">+ Agregar</button>
+                </div>
+                <div id="leaders-container"></div>
+            </div>
+
             <!-- Marcas -->
             <div class="admin-section">
                 <h3>🏷️ Marcas Propias</h3>
@@ -208,7 +222,7 @@
 
             <!-- Acciones de Evaluación -->
             <div class="admin-section">
-                <h3>✅ Acciones de Evaluación (Regente)</h3>
+                <h3>✅ Acciones de Evaluación</h3>
                 <div class="add-row">
                     <input type="text" id="new-action" placeholder="Nueva acción" style="flex:3;">
                     <button class="btn btn-success" onclick="addAction()">+ Agregar</button>
@@ -216,14 +230,14 @@
                 <div id="actions-container"></div>
             </div>
 
-            <!-- Google Sheets URL (Solo para admin, ya configurada) -->
+            <!-- Google Sheets URL -->
             <div class="admin-section">
                 <h3>🔗 Google Sheets URL</h3>
                 <div class="form-group">
                     <input type="url" id="sheets-url" readonly style="background:#f5f5f5;">
                 </div>
                 <p style="font-size:11px; color:#666;">
-                    ✅ URL configurada automáticamente. Solo cambia si es necesario.
+                    ✅ URL configurada automáticamente.
                 </p>
                 <button class="btn btn-warning" onclick="updateSheetsURL()" style="margin-top:10px;">✏️ Actualizar URL</button>
             </div>
@@ -396,7 +410,7 @@
             <button class="back-btn" onclick="showScreen('welcome-screen')">←</button>
             <div class="header">
                 <div class="emoji">📋</div>
-                <h1>Evaluación Semanal</h1>
+                <h1>Evaluación Semanal - Regente</h1>
             </div>
             <div class="form-group">
                 <label>Regente *</label>
@@ -414,12 +428,38 @@
                 <label>Fecha</label>
                 <input type="date" id="regent-date">
             </div>
-            <button class="btn btn-primary" onclick="startEvaluation()">Comenzar →</button>
+            <button class="btn btn-primary" onclick="startEvaluation('regente')">Comenzar →</button>
+        </div>
+
+        <!-- Líder de Sala -->
+        <div id="lider-screen" class="screen">
+            <button class="back-btn" onclick="showScreen('welcome-screen')">←</button>
+            <div class="header">
+                <div class="emoji">👔</div>
+                <h1>Evaluación Semanal - Líder</h1>
+            </div>
+            <div class="form-group">
+                <label>Líder de Sala *</label>
+                <select id="lider-name-select"></select>
+            </div>
+            <div class="form-group">
+                <label>Asesora *</label>
+                <select id="lider-advisor-select"></select>
+            </div>
+            <div class="form-group">
+                <label>Sucursal *</label>
+                <select id="lider-branch-select"></select>
+            </div>
+            <div class="form-group">
+                <label>Fecha</label>
+                <input type="date" id="lider-date">
+            </div>
+            <button class="btn btn-info" onclick="startEvaluation('lider')">Comenzar →</button>
         </div>
 
         <!-- Evaluación -->
         <div id="evaluation-screen" class="screen">
-            <button class="back-btn" onclick="showScreen('regent-screen')">←</button>
+            <button class="back-btn" onclick="showScreen('welcome-screen')">←</button>
             <div class="header">
                 <div class="emoji">✅</div>
                 <h1>Evaluación de Acciones</h1>
@@ -436,7 +476,7 @@
                 <textarea id="eval-observations" rows="3" placeholder="Opcional"></textarea>
             </div>
             <div class="nav-buttons">
-                <button class="btn btn-secondary" onclick="showScreen('regent-screen')">← Atrás</button>
+                <button class="btn btn-secondary" onclick="showScreen('welcome-screen')">← Atrás</button>
                 <button class="btn btn-success" onclick="submitEvaluation()">✓ Enviar</button>
             </div>
         </div>
@@ -501,7 +541,7 @@
 
     <script>
         // ============================================
-        // ✅ URL DE GOOGLE SHEETS PRE-CONFIGURADA
+        // URL DE GOOGLE SHEETS PRE-CONFIGURADA
         // ============================================
         const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyzID-VZe-WFmXALmWyOF9N_RUAPQDCzqAvRi04ksslp5Ai2hjMIk6iYJm_LBE3oV85-Q/exec';
 
@@ -512,9 +552,10 @@
             branches: [],
             advisors: [],
             regents: [],
+            leaders: [],  // ✅ NUEVO
             brands: [],
             actions: [],
-            sheetsURL: DEFAULT_SHEETS_URL,  // ✅ URL por defecto
+            sheetsURL: DEFAULT_SHEETS_URL,
             password: 'beauty2024'
         };
 
@@ -523,6 +564,7 @@
         let withoutPurchase = 0;
         let brandUnits = {};
         let evalData = {};
+        let currentRol = '';  // ✅ Para saber si es regente o líder
         let configLoaded = false;
 
         // ============================================
@@ -533,7 +575,6 @@
                 const saved = localStorage.getItem('beautyData');
                 if (saved) {
                     const localData = JSON.parse(saved);
-                    // Mantener URL por defecto a menos que el admin la haya cambiado
                     if (localData.sheetsURL && localData.sheetsURL !== DEFAULT_SHEETS_URL) {
                         data.sheetsURL = localData.sheetsURL;
                     }
@@ -567,6 +608,7 @@
                 if (config.branches) data.branches = config.branches;
                 if (config.advisors) data.advisors = config.advisors;
                 if (config.regents) data.regents = config.regents;
+                if (config.leaders) data.leaders = config.leaders;  // ✅ NUEVO
                 if (config.brands) data.brands = config.brands;
                 if (config.actions) data.actions = config.actions;
                 if (config.password) data.password = config.password;
@@ -635,6 +677,7 @@
             }
             if (id === 'advisor-screen') { loadAdvisorSelects(); document.getElementById('advisor-date').valueAsDate = new Date(); }
             if (id === 'regent-screen') { loadRegentSelects(); document.getElementById('regent-date').valueAsDate = new Date(); }
+            if (id === 'lider-screen') { loadLiderSelects(); document.getElementById('lider-date').valueAsDate = new Date(); }  // ✅ NUEVO
             if (id === 'welcome-screen') { 
                 resetAll();
                 if (configLoaded) {
@@ -738,6 +781,7 @@
 
             renderAdminList('advisors-container', data.advisors, 'advisor', '👤');
             renderAdminList('regents-container', data.regents, 'regent', '📋');
+            renderAdminList('leaders-container', data.leaders, 'leader', '👔');  // ✅ NUEVO
             renderAdminList('brands-container', data.brands, 'brand', '🏷️');
 
             const actionsContainer = document.getElementById('actions-container');
@@ -848,6 +892,7 @@
         // ============================================
         async function addAdvisor() { await addItemToList('advisor', 'new-advisor', 'Asesora', data.advisors); }
         async function addRegent() { await addItemToList('regent', 'new-regent', 'Regente', data.regents); }
+        async function addLeader() { await addItemToList('leader', 'new-leader', 'Líder', data.leaders); }  // ✅ NUEVO
         async function addBrand() { await addItemToList('brand', 'new-brand', 'Marca', data.brands); }
         async function addAction() { await addItemToList('action', 'new-action', 'Acción', data.actions); }
 
@@ -867,6 +912,7 @@
             
             if (type === 'advisor') data.advisors.splice(i, 1);
             else if (type === 'regent') data.regents.splice(i, 1);
+            else if (type === 'leader') data.leaders.splice(i, 1);  // ✅ NUEVO
             else if (type === 'brand') data.brands.splice(i, 1);
             else if (type === 'action') data.actions.splice(i, 1);
             
@@ -883,6 +929,7 @@
             let arr;
             if (type === 'advisor') arr = data.advisors;
             else if (type === 'regent') arr = data.regents;
+            else if (type === 'leader') arr = data.leaders;  // ✅ NUEVO
             else if (type === 'brand') arr = data.brands;
             else if (type === 'action') arr = data.actions;
             
@@ -904,6 +951,7 @@
             let arr;
             if (type === 'advisor') arr = data.advisors;
             else if (type === 'regent') arr = data.regents;
+            else if (type === 'leader') arr = data.leaders;  // ✅ NUEVO
             else if (type === 'brand') arr = data.brands;
             else if (type === 'action') arr = data.actions;
             
@@ -1156,13 +1204,46 @@
                 }).join('');
         }
 
-        function startEvaluation() {
-            const regent = document.getElementById('regent-name-select').value;
-            const advisor = document.getElementById('regent-advisor-select').value;
-            const branch = document.getElementById('regent-branch-select').value;
-            if (!regent || !advisor || !branch) { showToast('❌ Completa todos los campos'); return; }
+        // ✅ NUEVA FUNCIÓN PARA LÍDERES
+        function loadLiderSelects() {
+            document.getElementById('lider-name-select').innerHTML = 
+                '<option value="">Selecciona líder</option>' + 
+                data.leaders.map(l => {
+                    const name = typeof l === 'object' ? (l.Nombre || l.name) : l;
+                    return `<option value="${name}">${name}</option>`;
+                }).join('');
+            document.getElementById('lider-advisor-select').innerHTML = 
+                '<option value="">Selecciona asesora</option>' + 
+                data.advisors.map(a => {
+                    const name = typeof a === 'object' ? (a.Nombre || a.name) : a;
+                    return `<option value="${name}">${name}</option>`;
+                }).join('');
+            document.getElementById('lider-branch-select').innerHTML = 
+                '<option value="">Selecciona sucursal</option>' + 
+                data.branches.map(b => {
+                    const name = b.Nombre || b.name || 'Sin nombre';
+                    return `<option value="${name}">${name}</option>`;
+                }).join('');
+        }
 
-            evalData = {regent, advisor, branch, actions: {}};
+        function startEvaluation(rol) {
+            currentRol = rol;  // ✅ Guardar si es regente o líder
+            
+            let nombre, asesora, sucursal;
+            
+            if (rol === 'regente') {
+                nombre = document.getElementById('regent-name-select').value;
+                asesora = document.getElementById('regent-advisor-select').value;
+                sucursal = document.getElementById('regent-branch-select').value;
+            } else {
+                nombre = document.getElementById('lider-name-select').value;
+                asesora = document.getElementById('lider-advisor-select').value;
+                sucursal = document.getElementById('lider-branch-select').value;
+            }
+            
+            if (!nombre || !asesora || !sucursal) { showToast('❌ Completa todos los campos'); return; }
+
+            evalData = {rol, nombre, asesora, sucursal, actions: {}};
             const container = document.getElementById('evaluation-actions-container');
             container.innerHTML = '';
             
@@ -1213,17 +1294,24 @@
             const score = total > 0 ? (yes / total * 100) : 0;
 
             const evaluation = {
-                tipo: 'evaluacion',
                 fecha: new Date().toISOString(),
-                regente: evalData.regent,
-                asesora: evalData.advisor,
-                sucursal: evalData.branch,
+                asesora: evalData.asesora,
+                sucursal: evalData.sucursal,
                 calificacion: score.toFixed(0) + '%',
                 si: yes,
                 no: no,
                 na: na,
                 obs: document.getElementById('eval-observations').value
             };
+
+            // ✅ Enviar a diferente hoja según el rol
+            if (evalData.rol === 'regente') {
+                evaluation.tipo = 'evaluacion_regente';
+                evaluation.regente = evalData.nombre;
+            } else {
+                evaluation.tipo = 'evaluacion_lider';
+                evaluation.lider = evalData.nombre;
+            }
 
             if (data.sheetsURL) {
                 try {
@@ -1273,8 +1361,8 @@
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('advisor-date').value = today;
             document.getElementById('regent-date').value = today;
+            document.getElementById('lider-date').value = today;  // ✅ NUEVO
             
-            // Cargar configuración desde Sheets (con URL pre-configurada)
             if (data.sheetsURL) {
                 const success = await loadConfigFromSheets();
                 if (success) {
