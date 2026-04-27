@@ -552,7 +552,7 @@
             branches: [],
             advisors: [],
             regents: [],
-            leaders: [],  // ✅ NUEVO
+            leaders: [],
             brands: [],
             actions: [],
             sheetsURL: DEFAULT_SHEETS_URL,
@@ -564,7 +564,7 @@
         let withoutPurchase = 0;
         let brandUnits = {};
         let evalData = {};
-        let currentRol = '';  // ✅ Para saber si es regente o líder
+        let currentRol = '';
         let configLoaded = false;
 
         // ============================================
@@ -608,7 +608,7 @@
                 if (config.branches) data.branches = config.branches;
                 if (config.advisors) data.advisors = config.advisors;
                 if (config.regents) data.regents = config.regents;
-                if (config.leaders) data.leaders = config.leaders;  // ✅ NUEVO
+                if (config.leaders) data.leaders = config.leaders;
                 if (config.brands) data.brands = config.brands;
                 if (config.actions) data.actions = config.actions;
                 if (config.password) data.password = config.password;
@@ -677,7 +677,7 @@
             }
             if (id === 'advisor-screen') { loadAdvisorSelects(); document.getElementById('advisor-date').valueAsDate = new Date(); }
             if (id === 'regent-screen') { loadRegentSelects(); document.getElementById('regent-date').valueAsDate = new Date(); }
-            if (id === 'lider-screen') { loadLiderSelects(); document.getElementById('lider-date').valueAsDate = new Date(); }  // ✅ NUEVO
+            if (id === 'lider-screen') { loadLiderSelects(); document.getElementById('lider-date').valueAsDate = new Date(); }
             if (id === 'welcome-screen') { 
                 resetAll();
                 if (configLoaded) {
@@ -754,7 +754,6 @@
         // ADMIN - RENDERIZADO
         // ============================================
         function renderAdmin() {
-            // Sucursales
             const branchesContainer = document.getElementById('branches-container');
             branchesContainer.innerHTML = '';
             if (data.branches.length === 0) {
@@ -781,7 +780,7 @@
 
             renderAdminList('advisors-container', data.advisors, 'advisor', '👤');
             renderAdminList('regents-container', data.regents, 'regent', '📋');
-            renderAdminList('leaders-container', data.leaders, 'leader', '👔');  // ✅ NUEVO
+            renderAdminList('leaders-container', data.leaders, 'leader', '👔');
             renderAdminList('brands-container', data.brands, 'brand', '🏷️');
 
             const actionsContainer = document.getElementById('actions-container');
@@ -892,7 +891,7 @@
         // ============================================
         async function addAdvisor() { await addItemToList('advisor', 'new-advisor', 'Asesora', data.advisors); }
         async function addRegent() { await addItemToList('regent', 'new-regent', 'Regente', data.regents); }
-        async function addLeader() { await addItemToList('leader', 'new-leader', 'Líder', data.leaders); }  // ✅ NUEVO
+        async function addLeader() { await addItemToList('leader', 'new-leader', 'Líder', data.leaders); }
         async function addBrand() { await addItemToList('brand', 'new-brand', 'Marca', data.brands); }
         async function addAction() { await addItemToList('action', 'new-action', 'Acción', data.actions); }
 
@@ -912,7 +911,7 @@
             
             if (type === 'advisor') data.advisors.splice(i, 1);
             else if (type === 'regent') data.regents.splice(i, 1);
-            else if (type === 'leader') data.leaders.splice(i, 1);  // ✅ NUEVO
+            else if (type === 'leader') data.leaders.splice(i, 1);
             else if (type === 'brand') data.brands.splice(i, 1);
             else if (type === 'action') data.actions.splice(i, 1);
             
@@ -929,7 +928,7 @@
             let arr;
             if (type === 'advisor') arr = data.advisors;
             else if (type === 'regent') arr = data.regents;
-            else if (type === 'leader') arr = data.leaders;  // ✅ NUEVO
+            else if (type === 'leader') arr = data.leaders;
             else if (type === 'brand') arr = data.brands;
             else if (type === 'action') arr = data.actions;
             
@@ -951,7 +950,7 @@
             let arr;
             if (type === 'advisor') arr = data.advisors;
             else if (type === 'regent') arr = data.regents;
-            else if (type === 'leader') arr = data.leaders;  // ✅ NUEVO
+            else if (type === 'leader') arr = data.leaders;
             else if (type === 'brand') arr = data.brands;
             else if (type === 'action') arr = data.actions;
             
@@ -1181,7 +1180,7 @@
         }
 
         // ============================================
-        // REGENTE - EVALUACIONES
+        // REGENTE Y LÍDER - EVALUACIONES
         // ============================================
         function loadRegentSelects() {
             document.getElementById('regent-name-select').innerHTML = 
@@ -1204,7 +1203,6 @@
                 }).join('');
         }
 
-        // ✅ NUEVA FUNCIÓN PARA LÍDERES
         function loadLiderSelects() {
             document.getElementById('lider-name-select').innerHTML = 
                 '<option value="">Selecciona líder</option>' + 
@@ -1227,7 +1225,7 @@
         }
 
         function startEvaluation(rol) {
-            currentRol = rol;  // ✅ Guardar si es regente o líder
+            currentRol = rol;
             
             let nombre, asesora, sucursal;
             
@@ -1304,7 +1302,6 @@
                 obs: document.getElementById('eval-observations').value
             };
 
-            // ✅ Enviar a diferente hoja según el rol
             if (evalData.rol === 'regente') {
                 evaluation.tipo = 'evaluacion_regente';
                 evaluation.regente = evalData.nombre;
@@ -1361,7 +1358,7 @@
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('advisor-date').value = today;
             document.getElementById('regent-date').value = today;
-            document.getElementById('lider-date').value = today;  // ✅ NUEVO
+            document.getElementById('lider-date').value = today;
             
             if (data.sheetsURL) {
                 const success = await loadConfigFromSheets();
