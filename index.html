@@ -12,6 +12,7 @@
         .header h1 { color: #764ba2; font-size: 24px; margin-bottom: 10px; }
         .emoji { font-size: 50px; }
         .btn { width: 100%; padding: 18px; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin: 12px 0; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
         .btn-success { background: #2ed573; color: white; }
         .btn-secondary { background: #f0f0f0; color: #333; }
@@ -43,8 +44,9 @@
         .add-row input { flex: 1; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; }
         .add-row button { width: auto; padding: 12px 20px; }
         .back-btn { position: absolute; top: 15px; left: 15px; width: 40px; height: 40px; border-radius: 50%; background: #f0f0f0; border: none; cursor: pointer; font-size: 18px; }
-        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 15px 30px; border-radius: 10px; display: none; z-index: 1001; animation: slideUp 0.3s; }
+        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 15px 30px; border-radius: 10px; display: none; z-index: 1001; animation: slideUp 0.3s; max-width: 90%; text-align: center; }
         .toast.active { display: block; }
+        .toast.error { background: #ff4757; }
         @keyframes slideUp { from { opacity: 0; transform: translateX(-50%) translateY(20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
         .modal.active { display: flex; }
@@ -85,13 +87,14 @@
         .loading { text-align: center; padding: 20px; color: #666; }
         .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid #e0e0e0; border-top-color: #764ba2; border-radius: 50%; animation: spin 1s linear infinite; margin-right: 10px; vertical-align: middle; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        .role-btn { pointer-events: none; opacity: 0.5; }
+        .role-btn.ready { pointer-events: auto; opacity: 1; }
     </style>
 </head>
 <body>
     <div class="container">
         <button class="admin-icon" onclick="showScreen('admin-login-screen')" title="Administración">⚙️</button>
 
-        <!-- Pantalla de Carga -->
         <div id="loading-screen" class="screen active">
             <div class="header">
                 <div class="emoji">⏳</div>
@@ -103,26 +106,27 @@
             </div>
         </div>
 
-        <!-- Bienvenida -->
         <div id="welcome-screen" class="screen">
             <div class="header">
                 <div class="emoji">💄</div>
                 <h1>Seguimiento Asesoras Beauty</h1>
                 <p>Selecciona tu rol para continuar</p>
             </div>
-            <button class="btn btn-primary" onclick="showScreen('advisor-screen')">
+            <button id="btn-asesora" class="btn btn-primary role-btn" onclick="showScreen('advisor-screen')">
                 <span>💄</span><span><strong>Asesora de Belleza</strong><br><small>Registro diario de ventas</small></span>
             </button>
-            <button class="btn btn-secondary" onclick="showScreen('regent-screen')">
+            <button id="btn-regente" class="btn btn-secondary role-btn" onclick="showScreen('regent-screen')">
                 <span>📋</span><span><strong>Regente</strong><br><small>Evaluación semanal</small></span>
             </button>
-            <button class="btn btn-info" onclick="showScreen('lider-screen')">
+            <button id="btn-lider" class="btn btn-info role-btn" onclick="showScreen('lider-screen')">
                 <span>👔</span><span><strong>Líder de Sala</strong><br><small>Evaluación semanal</small></span>
             </button>
-            <div class="sync-status" id="sync-status">✅ Listo para usar</div>
+            <div class="sync-status" id="sync-status">⏳ Cargando configuración...</div>
+            <div id="config-error" style="display:none; color:#ff4757; text-align:center; margin-top:15px; font-weight:600;">
+                ⚠️ Sin conexión. Verifica tu internet y recarga la página.
+            </div>
         </div>
 
-        <!-- Login Admin -->
         <div id="admin-login-screen" class="screen">
             <button class="back-btn" onclick="showScreen('welcome-screen')">←</button>
             <div class="header">
@@ -137,38 +141,22 @@
             <button class="btn btn-secondary" onclick="showScreen('welcome-screen')">← Volver</button>
         </div>
 
-        <!-- Admin -->
         <div id="admin-screen" class="screen">
             <button class="back-btn" onclick="showScreen('welcome-screen')">←</button>
             <div class="header">
                 <div class="emoji">⚙️</div>
                 <h1>Panel Administración</h1>
             </div>
+            <div class="info-box">💡 Los cambios se guardan en Google Sheets y se sincronizan automáticamente.</div>
 
-            <div class="info-box">
-                💡 <strong>Nota:</strong> Los cambios se guardan en Google Sheets y se sincronizan automáticamente.
-            </div>
-
-            <!-- CAMBIAR CONTRASEÑA -->
             <div class="admin-section">
                 <h3>🔐 Cambiar Contraseña</h3>
-                <div class="form-group">
-                    <label>Contraseña Actual</label>
-                    <input type="password" id="current-password" placeholder="Contraseña actual">
-                </div>
-                <div class="form-group">
-                    <label>Nueva Contraseña</label>
-                    <input type="password" id="new-password" placeholder="Nueva contraseña" oninput="checkPasswordStrength()">
-                    <div class="password-strength" id="password-strength"></div>
-                </div>
-                <div class="form-group">
-                    <label>Confirmar Nueva Contraseña</label>
-                    <input type="password" id="confirm-password" placeholder="Confirma nueva contraseña">
-                </div>
+                <div class="form-group"><label>Contraseña Actual</label><input type="password" id="current-password" placeholder="Contraseña actual"></div>
+                <div class="form-group"><label>Nueva Contraseña</label><input type="password" id="new-password" placeholder="Nueva contraseña" oninput="checkPasswordStrength()"><div class="password-strength" id="password-strength"></div></div>
+                <div class="form-group"><label>Confirmar Nueva Contraseña</label><input type="password" id="confirm-password" placeholder="Confirma nueva contraseña"></div>
                 <button class="btn btn-success" onclick="changePassword()">🔑 Cambiar Contraseña</button>
             </div>
 
-            <!-- Sucursales -->
             <div class="admin-section">
                 <h3>🏪 Sucursales con Estimados</h3>
                 <div class="add-row">
@@ -180,516 +168,195 @@
                 <div id="branches-container"></div>
             </div>
 
-            <!-- Asesoras -->
-            <div class="admin-section">
-                <h3>👥 Asesoras</h3>
-                <div class="add-row">
-                    <input type="text" id="new-advisor" placeholder="Nombre asesora">
-                    <button class="btn btn-success" onclick="addAdvisor()">+ Agregar</button>
-                </div>
-                <div id="advisors-container"></div>
-            </div>
+            <div class="admin-section"><h3>👥 Asesoras</h3><div class="add-row"><input type="text" id="new-advisor" placeholder="Nombre asesora"><button class="btn btn-success" onclick="addAdvisor()">+ Agregar</button></div><div id="advisors-container"></div></div>
+            <div class="admin-section"><h3>📋 Regentes</h3><div class="add-row"><input type="text" id="new-regent" placeholder="Nombre regente"><button class="btn btn-success" onclick="addRegent()">+ Agregar</button></div><div id="regents-container"></div></div>
+            <div class="admin-section"><h3>👔 Líderes de Sala</h3><div class="add-row"><input type="text" id="new-leader" placeholder="Nombre líder"><button class="btn btn-success" onclick="addLeader()">+ Agregar</button></div><div id="leaders-container"></div></div>
+            <div class="admin-section"><h3>🏷️ Marcas Propias</h3><div class="add-row"><input type="text" id="new-brand" placeholder="Nombre marca"><button class="btn btn-success" onclick="addBrand()">+ Agregar</button></div><div id="brands-container"></div></div>
+            <div class="admin-section"><h3>✅ Acciones de Evaluación</h3><div class="add-row"><input type="text" id="new-action" placeholder="Nueva acción" style="flex:3;"><button class="btn btn-success" onclick="addAction()">+ Agregar</button></div><div id="actions-container"></div></div>
 
-            <!-- Regentes -->
-            <div class="admin-section">
-                <h3>📋 Regentes</h3>
-                <div class="add-row">
-                    <input type="text" id="new-regent" placeholder="Nombre regente">
-                    <button class="btn btn-success" onclick="addRegent()">+ Agregar</button>
-                </div>
-                <div id="regents-container"></div>
-            </div>
-
-            <!-- Líderes de Sala -->
-            <div class="admin-section">
-                <h3>👔 Líderes de Sala</h3>
-                <div class="add-row">
-                    <input type="text" id="new-leader" placeholder="Nombre líder">
-                    <button class="btn btn-success" onclick="addLeader()">+ Agregar</button>
-                </div>
-                <div id="leaders-container"></div>
-            </div>
-
-            <!-- Marcas -->
-            <div class="admin-section">
-                <h3>🏷️ Marcas Propias</h3>
-                <div class="add-row">
-                    <input type="text" id="new-brand" placeholder="Nombre marca">
-                    <button class="btn btn-success" onclick="addBrand()">+ Agregar</button>
-                </div>
-                <div id="brands-container"></div>
-            </div>
-
-            <!-- Acciones de Evaluación -->
-            <div class="admin-section">
-                <h3>✅ Acciones de Evaluación</h3>
-                <div class="add-row">
-                    <input type="text" id="new-action" placeholder="Nueva acción" style="flex:3;">
-                    <button class="btn btn-success" onclick="addAction()">+ Agregar</button>
-                </div>
-                <div id="actions-container"></div>
-            </div>
-
-            <!-- Google Sheets URL -->
             <div class="admin-section">
                 <h3>🔗 Google Sheets URL</h3>
-                <div class="form-group">
-                    <input type="url" id="sheets-url" readonly style="background:#f5f5f5;">
-                </div>
-                <p style="font-size:11px; color:#666;">
-                    ✅ URL configurada automáticamente.
-                </p>
+                <div class="form-group"><input type="url" id="sheets-url" readonly style="background:#f5f5f5;"></div>
+                <p style="font-size:11px; color:#666;">✅ URL configurada automáticamente.</p>
                 <button class="btn btn-warning" onclick="updateSheetsURL()" style="margin-top:10px;">✏️ Actualizar URL</button>
             </div>
-
             <button class="btn btn-warning" onclick="syncConfig()">🔄 Sincronizar Configuración</button>
             <button class="btn btn-secondary" onclick="showScreen('welcome-screen')">← Salir</button>
         </div>
 
-        <!-- Asesora Identificación -->
         <div id="advisor-screen" class="screen">
             <button class="back-btn" onclick="showScreen('welcome-screen')">←</button>
-            <div class="header">
-                <div class="emoji">💄</div>
-                <h1>Identificación</h1>
-            </div>
-            <div class="form-group">
-                <label>Tu Nombre *</label>
-                <select id="advisor-name-select"></select>
-            </div>
-            <div class="form-group">
-                <label>Sucursal *</label>
-                <select id="advisor-branch-select" onchange="showBranchEstimates()"></select>
-            </div>
+            <div class="header"><div class="emoji">💄</div><h1>Identificación</h1></div>
+            <div class="form-group"><label>Tu Nombre *</label><select id="advisor-name-select"></select></div>
+            <div class="form-group"><label>Sucursal *</label><select id="advisor-branch-select" onchange="showBranchEstimates()"></select></div>
             <div id="estimates-card" class="branch-card" style="display:none;">
                 <h3 style="color:white; margin-bottom:15px;">📊 Tus Estimados Mensuales</h3>
                 <div class="stat-grid">
-                    <div class="stat-box" style="background:rgba(255,255,255,0.2);">
-                        <div class="label" style="color:rgba(255,255,255,0.9);">Meta en Bs</div>
-                        <div class="value" id="estimate-bs-display" style="color:#fff; font-size:28px;">Bs. 0</div>
-                    </div>
-                    <div class="stat-box" style="background:rgba(255,255,255,0.2);">
-                        <div class="label" style="color:rgba(255,255,255,0.9);">Meta en Uds</div>
-                        <div class="value" id="estimate-units-display" style="color:#fff; font-size:28px;">0 uds.</div>
-                    </div>
+                    <div class="stat-box" style="background:rgba(255,255,255,0.2);"><div class="label" style="color:rgba(255,255,255,0.9);">Meta en Bs</div><div class="value" id="estimate-bs-display" style="color:#fff; font-size:28px;">Bs. 0</div></div>
+                    <div class="stat-box" style="background:rgba(255,255,255,0.2);"><div class="label" style="color:rgba(255,255,255,0.9);">Meta en Uds</div><div class="value" id="estimate-units-display" style="color:#fff; font-size:28px;">0 uds.</div></div>
                 </div>
             </div>
-            <div class="form-group">
-                <label>Fecha *</label>
-                <input type="date" id="advisor-date">
-            </div>
+            <div class="form-group"><label>Fecha *</label><input type="date" id="advisor-date"></div>
             <button class="btn btn-primary" onclick="goToSales()">Continuar →</button>
         </div>
 
-        <!-- Ventas -->
         <div id="sales-screen" class="screen">
             <button class="back-btn" onclick="showScreen('advisor-screen')">←</button>
-            <div class="header">
-                <div class="emoji">📊</div>
-                <h1>Tu Meta del Mes</h1>
-            </div>
-            <div class="card">
-                <h3>📊 Ventas en Bolivianos</h3>
-                <div class="stat-box">
-                    <div class="label">Estimado del Mes</div>
-                    <div class="value" id="monthly-bs">Bs. 0</div>
-                </div>
-                <div class="progress-bar"><div class="progress-fill" id="progress-bs" style="width:0%"></div></div>
-                <div class="form-group">
-                    <label>Venta del Día (Bs.)</label>
-                    <input type="number" id="daily-bs" oninput="calcProgress()" placeholder="0" min="0">
-                </div>
-                <div class="stat-box">
-                    <div class="label">Cumplimiento</div>
-                    <div class="value" id="compliance-bs">0%</div>
-                </div>
-            </div>
-            <div class="card">
-                <h3>📦 Ventas en Unidades</h3>
-                <div class="stat-box">
-                    <div class="label">Estimado del Mes</div>
-                    <div class="value" id="monthly-units">0 uds.</div>
-                </div>
-                <div class="progress-bar"><div class="progress-fill" id="progress-units" style="width:0%"></div></div>
-                <div class="form-group">
-                    <label>Venta del Día (Uds.)</label>
-                    <input type="number" id="daily-units" oninput="calcProgressUnits()" placeholder="0" min="0">
-                </div>
-                <div class="stat-box">
-                    <div class="label">Cumplimiento</div>
-                    <div class="value" id="compliance-units">0%</div>
-                </div>
-            </div>
-            <div class="nav-buttons">
-                <button class="btn btn-secondary" onclick="showScreen('advisor-screen')">← Atrás</button>
-                <button class="btn btn-primary" onclick="goToConversion()">Continuar →</button>
-            </div>
+            <div class="header"><div class="emoji">📊</div><h1>Tu Meta del Mes</h1></div>
+            <div class="card"><h3>📊 Ventas en Bolivianos</h3><div class="stat-box"><div class="label">Estimado del Mes</div><div class="value" id="monthly-bs">Bs. 0</div></div><div class="progress-bar"><div class="progress-fill" id="progress-bs" style="width:0%"></div></div><div class="form-group"><label>Venta del Día (Bs.)</label><input type="number" id="daily-bs" inputmode="decimal" oninput="calcProgress()" placeholder="0" min="0"></div><div class="stat-box"><div class="label">Cumplimiento</div><div class="value" id="compliance-bs">0%</div></div></div>
+            <div class="card"><h3>📦 Ventas en Unidades</h3><div class="stat-box"><div class="label">Estimado del Mes</div><div class="value" id="monthly-units">0 uds.</div></div><div class="progress-bar"><div class="progress-fill" id="progress-units" style="width:0%"></div></div><div class="form-group"><label>Venta del Día (Uds.)</label><input type="number" id="daily-units" inputmode="numeric" oninput="calcProgressUnits()" placeholder="0" min="0"></div><div class="stat-box"><div class="label">Cumplimiento</div><div class="value" id="compliance-units">0%</div></div></div>
+            <div class="nav-buttons"><button class="btn btn-secondary" onclick="showScreen('advisor-screen')">← Atrás</button><button class="btn btn-primary" onclick="goToConversion()">Continuar →</button></div>
         </div>
 
-        <!-- Conversión -->
         <div id="conversion-screen" class="screen">
             <button class="back-btn" onclick="showScreen('sales-screen')">←</button>
-            <div class="header">
-                <div class="emoji">📈</div>
-                <h1>Tasa de Conversión</h1>
-            </div>
-            <div class="card">
-                <h3>✅ Con Compra</h3>
-                <div class="counter">
-                    <button onclick="updateCounter('with', -1)">−</button>
-                    <span id="with-purchase">0</span>
-                    <button onclick="updateCounter('with', 1)">+</button>
-                </div>
-            </div>
-            <div class="card">
-                <h3>❌ Sin Compra</h3>
-                <div class="counter">
-                    <button onclick="updateCounter('without', -1)">−</button>
-                    <span id="without-purchase">0</span>
-                    <button onclick="updateCounter('without', 1)">+</button>
-                </div>
-            </div>
-            <div class="card">
-                <div class="stat-grid">
-                    <div class="stat-box">
-                        <div class="label">Total Atendidos</div>
-                        <div class="value" id="total-attended">0</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="label">Tasa Conversión</div>
-                        <div class="value" id="conversion-rate">0%</div>
-                    </div>
-                </div>
-            </div>
-            <div class="nav-buttons">
-                <button class="btn btn-secondary" onclick="showScreen('sales-screen')">← Atrás</button>
-                <button class="btn btn-primary" onclick="goToBrands()">Continuar →</button>
-            </div>
+            <div class="header"><div class="emoji">👥</div><h1>Clientes Atendidos</h1></div>
+            <div class="card"><h3>✅ Con Compra</h3><div class="counter"><button onclick="updateCounter('with', -1)">−</button><span id="with-purchase">0</span><button onclick="updateCounter('with', 1)">+</button></div></div>
+            <div class="card"><h3>❌ Sin Compra</h3><div class="counter"><button onclick="updateCounter('without', -1)">−</button><span id="without-purchase">0</span><button onclick="updateCounter('without', 1)">+</button></div></div>
+            <div class="card"><div class="stat-grid"><div class="stat-box"><div class="label">Total Atendidos</div><div class="value" id="total-attended">0</div></div><div class="stat-box"><div class="label">Tasa Conversión</div><div class="value" id="conversion-rate">0%</div></div></div></div>
+            <div class="nav-buttons"><button class="btn btn-secondary" onclick="showScreen('sales-screen')">← Atrás</button><button class="btn btn-primary" onclick="goToBrands()">Continuar →</button></div>
         </div>
 
-        <!-- Marcas -->
         <div id="brands-screen" class="screen">
             <button class="back-btn" onclick="showScreen('conversion-screen')">←</button>
-            <div class="header">
-                <div class="emoji">🏷️</div>
-                <h1>Marca Propia</h1>
-            </div>
+            <div class="header"><div class="emoji">🏷️</div><h1>Marca Propia</h1></div>
             <div id="brands-counters-container"></div>
-            <div class="total-brands-box">
-                <div class="label">Total uds. marca propia</div>
-                <div class="value" id="total-brands-units">0</div>
-            </div>
-            <div class="nav-buttons">
-                <button class="btn btn-secondary" onclick="showScreen('conversion-screen')">← Atrás</button>
-                <button class="btn btn-success" onclick="submitRecord()">✓ Enviar Registro</button>
-            </div>
+            <div class="total-brands-box"><div class="label">Total uds. marca propia</div><div class="value" id="total-brands-units">0</div></div>
+            <div class="nav-buttons"><button class="btn btn-secondary" onclick="showScreen('conversion-screen')">← Atrás</button><button id="btn-submit-record" class="btn btn-success" onclick="submitRecord()">✓ Enviar Registro</button></div>
         </div>
 
-        <!-- Resumen -->
         <div id="summary-screen" class="screen">
-            <div class="header">
-                <div class="emoji">✅</div>
-                <h1>¡Registro Enviado!</h1>
-            </div>
-            <div class="card">
-                <h3>📋 Resumen</h3>
-                <div class="stat-grid">
-                    <div class="stat-box"><div class="label">Cumpl. Bs</div><div class="value" id="summary-bs">0%</div></div>
-                    <div class="stat-box"><div class="label">Cumpl. Uds</div><div class="value" id="summary-units">0%</div></div>
-                    <div class="stat-box"><div class="label">Venta Día</div><div class="value" id="summary-daily">Bs. 0</div></div>
-                    <div class="stat-box"><div class="label">Clientes</div><div class="value" id="summary-clients">0</div></div>
-                    <div class="stat-box"><div class="label">Conversión</div><div class="value" id="summary-conversion">0%</div></div>
-                    <div class="stat-box"><div class="label">Marcas</div><div class="value" id="summary-brands">0</div></div>
-                </div>
-            </div>
+            <div class="header"><div class="emoji">✅</div><h1>¡Registro Enviado!</h1></div>
+            <div class="card"><h3>📋 Resumen</h3><div class="stat-grid"><div class="stat-box"><div class="label">Cumpl. Bs</div><div class="value" id="summary-bs">0%</div></div><div class="stat-box"><div class="label">Cumpl. Uds</div><div class="value" id="summary-units">0%</div></div><div class="stat-box"><div class="label">Venta Día</div><div class="value" id="summary-daily">Bs. 0</div></div><div class="stat-box"><div class="label">Clientes</div><div class="value" id="summary-clients">0</div></div><div class="stat-box"><div class="label">Conversión</div><div class="value" id="summary-conversion">0%</div></div><div class="stat-box"><div class="label">Marcas</div><div class="value" id="summary-brands">0</div></div></div></div>
             <button class="btn btn-primary" onclick="showScreen('welcome-screen')">+ Nuevo Registro</button>
         </div>
 
-        <!-- Regente -->
         <div id="regent-screen" class="screen">
             <button class="back-btn" onclick="showScreen('welcome-screen')">←</button>
-            <div class="header">
-                <div class="emoji">📋</div>
-                <h1>Evaluación Semanal - Regente</h1>
-            </div>
-            <div class="form-group">
-                <label>Regente *</label>
-                <select id="regent-name-select"></select>
-            </div>
-            <div class="form-group">
-                <label>Asesora *</label>
-                <select id="regent-advisor-select"></select>
-            </div>
-            <div class="form-group">
-                <label>Sucursal *</label>
-                <select id="regent-branch-select"></select>
-            </div>
-            <div class="form-group">
-                <label>Fecha</label>
-                <input type="date" id="regent-date">
-            </div>
+            <div class="header"><div class="emoji">📋</div><h1>Evaluación Semanal - Regente</h1></div>
+            <div class="form-group"><label>Nombre del Regente *</label><input type="text" id="regent-name-input" placeholder="Escribe tu nombre completo"></div>
+            <div class="form-group"><label>Asesora *</label><select id="regent-advisor-select"></select></div>
+            <div class="form-group"><label>Sucursal *</label><select id="regent-branch-select"></select></div>
+            <div class="form-group"><label>Fecha</label><input type="date" id="regent-date"></div>
             <button class="btn btn-primary" onclick="startEvaluation('regente')">Comenzar →</button>
         </div>
 
-        <!-- Líder de Sala -->
         <div id="lider-screen" class="screen">
             <button class="back-btn" onclick="showScreen('welcome-screen')">←</button>
-            <div class="header">
-                <div class="emoji">👔</div>
-                <h1>Evaluación Semanal - Líder</h1>
-            </div>
-            <div class="form-group">
-                <label>Líder de Sala *</label>
-                <select id="lider-name-select"></select>
-            </div>
-            <div class="form-group">
-                <label>Asesora *</label>
-                <select id="lider-advisor-select"></select>
-            </div>
-            <div class="form-group">
-                <label>Sucursal *</label>
-                <select id="lider-branch-select"></select>
-            </div>
-            <div class="form-group">
-                <label>Fecha</label>
-                <input type="date" id="lider-date">
-            </div>
+            <div class="header"><div class="emoji">👔</div><h1>Evaluación Semanal - Líder</h1></div>
+            <div class="form-group"><label>Nombre del Líder *</label><input type="text" id="lider-name-input" placeholder="Escribe tu nombre completo"></div>
+            <div class="form-group"><label>Asesora *</label><select id="lider-advisor-select"></select></div>
+            <div class="form-group"><label>Sucursal *</label><select id="lider-branch-select"></select></div>
+            <div class="form-group"><label>Fecha</label><input type="date" id="lider-date"></div>
             <button class="btn btn-info" onclick="startEvaluation('lider')">Comenzar →</button>
         </div>
 
-        <!-- Evaluación -->
         <div id="evaluation-screen" class="screen">
             <button class="back-btn" onclick="showScreen('welcome-screen')">←</button>
-            <div class="header">
-                <div class="emoji">✅</div>
-                <h1>Evaluación de Acciones</h1>
-            </div>
+            <div class="header"><div class="emoji">✅</div><h1>Evaluación de Acciones</h1></div>
             <div id="evaluation-actions-container"></div>
-            <div class="card">
-                <div class="stat-grid">
-                    <div class="stat-box"><div class="label">Calificación</div><div class="value" id="eval-score">0%</div></div>
-                    <div class="stat-box"><div class="label">SI / Total</div><div class="value" id="eval-count">0/0</div></div>
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Observaciones</label>
-                <textarea id="eval-observations" rows="3" placeholder="Opcional"></textarea>
-            </div>
-            <div class="nav-buttons">
-                <button class="btn btn-secondary" onclick="showScreen('welcome-screen')">← Atrás</button>
-                <button class="btn btn-success" onclick="submitEvaluation()">✓ Enviar</button>
-            </div>
+            <div class="card"><div class="stat-grid"><div class="stat-box"><div class="label">Calificación</div><div class="value" id="eval-score">0%</div></div><div class="stat-box"><div class="label">SI / Total</div><div class="value" id="eval-count">0/0</div></div></div></div>
+            <div class="form-group"><label>Observaciones</label><textarea id="eval-observations" rows="3" placeholder="Opcional"></textarea></div>
+            <div class="nav-buttons"><button class="btn btn-secondary" onclick="showScreen('welcome-screen')">← Atrás</button><button id="btn-submit-eval" class="btn btn-success" onclick="submitEvaluation()">✓ Enviar</button></div>
         </div>
 
-        <!-- Evaluación Enviada -->
         <div id="evaluation-sent-screen" class="screen">
-            <div class="header">
-                <div class="emoji">✅</div>
-                <h1>¡Evaluación Enviada!</h1>
-            </div>
-            <div class="card">
-                <div class="stat-grid">
-                    <div class="stat-box"><div class="label">Calificación</div><div class="value" id="final-score">0%</div></div>
-                    <div class="stat-box"><div class="label">Sí</div><div class="value" id="final-yes">0</div></div>
-                    <div class="stat-box"><div class="label">No</div><div class="value" id="final-no">0</div></div>
-                    <div class="stat-box"><div class="label">N/A</div><div class="value" id="final-na">0</div></div>
-                </div>
-            </div>
+            <div class="header"><div class="emoji">✅</div><h1>¡Evaluación Enviada!</h1></div>
+            <div class="card"><div class="stat-grid"><div class="stat-box"><div class="label">Calificación</div><div class="value" id="final-score">0%</div></div><div class="stat-box"><div class="label">Sí</div><div class="value" id="final-yes">0</div></div><div class="stat-box"><div class="label">No</div><div class="value" id="final-no">0</div></div><div class="stat-box"><div class="label">N/A</div><div class="value" id="final-na">0</div></div></div></div>
             <button class="btn btn-primary" onclick="showScreen('welcome-screen')">+ Nueva Evaluación</button>
         </div>
     </div>
 
-    <!-- Modal Editar Sucursal -->
-    <div id="edit-branch-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeBranchModal()">×</span>
-            <h3>Editar Sucursal</h3>
-            <div class="form-group">
-                <label>Nombre</label>
-                <input type="text" id="edit-branch-name">
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Estimado Bs</label>
-                    <input type="number" id="edit-branch-bs" min="0">
-                </div>
-                <div class="form-group">
-                    <label>Estimado Uds</label>
-                    <input type="number" id="edit-branch-units" min="0">
-                </div>
-            </div>
-            <input type="hidden" id="edit-branch-index">
-            <button class="btn btn-success" onclick="saveBranchEdit()">💾 Guardar</button>
-        </div>
-    </div>
-
-    <!-- Modal Editar Genérico -->
-    <div id="edit-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeEditModal()">×</span>
-            <h3 id="edit-modal-title">Editar</h3>
-            <div class="form-group">
-                <input type="text" id="edit-generic-input" placeholder="Nombre">
-            </div>
-            <input type="hidden" id="edit-generic-type">
-            <input type="hidden" id="edit-generic-index">
-            <button class="btn btn-success" onclick="saveGenericEdit()">💾 Guardar</button>
-        </div>
-    </div>
-
+    <div id="edit-branch-modal" class="modal"><div class="modal-content"><span class="close-modal" onclick="closeBranchModal()">×</span><h3>Editar Sucursal</h3><div class="form-group"><label>Nombre</label><input type="text" id="edit-branch-name"></div><div class="form-row"><div class="form-group"><label>Estimado Bs</label><input type="number" id="edit-branch-bs" min="0"></div><div class="form-group"><label>Estimado Uds</label><input type="number" id="edit-branch-units" min="0"></div></div><input type="hidden" id="edit-branch-index"><button class="btn btn-success" onclick="saveBranchEdit()">💾 Guardar</button></div></div>
+    <div id="edit-modal" class="modal"><div class="modal-content"><span class="close-modal" onclick="closeEditModal()">×</span><h3 id="edit-modal-title">Editar</h3><div class="form-group"><input type="text" id="edit-generic-input" placeholder="Nombre"></div><input type="hidden" id="edit-generic-type"><input type="hidden" id="edit-generic-index"><button class="btn btn-success" onclick="saveGenericEdit()">💾 Guardar</button></div></div>
     <div id="toast" class="toast"></div>
 
     <script>
-        // ============================================
-        // URL DE GOOGLE SHEETS PRE-CONFIGURADA
-        // ============================================
         const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbymsAUmdJPng-5lVlYQc7zUkY0x56LgcGeYd49s81AM7qCUEgrddLPy0e4yAqZ0KQPzOA/exec';
+        let data = { branches: [], advisors: [], regents: [], leaders: [], brands: [], actions: [], sheetsURL: DEFAULT_SHEETS_URL };
+        let currentEstimates = {bs: 0, units: 0}, withPurchase = 0, withoutPurchase = 0, brandUnits = {}, evalData = {}, currentRol = '', configLoaded = false;
 
-        // ============================================
-        // DATOS INICIALES
-        // ============================================
-        let data = {
-            branches: [],
-            advisors: [],
-            regents: [],
-            leaders: [],
-            brands: [],
-            actions: [],
-            sheetsURL: DEFAULT_SHEETS_URL,
-            password: 'beauty2024'
-        };
-
-        let currentEstimates = {bs: 0, units: 0};
-        let withPurchase = 0;
-        let withoutPurchase = 0;
-        let brandUnits = {};
-        let evalData = {};
-        let currentRol = '';
-        let configLoaded = false;
-
-        // ============================================
-        // CARGAR/GUARDAR LOCAL STORAGE
-        // ============================================
         function loadData() {
             try {
                 const saved = localStorage.getItem('beautyData');
                 if (saved) {
                     const localData = JSON.parse(saved);
-                    if (localData.sheetsURL && localData.sheetsURL !== DEFAULT_SHEETS_URL) {
-                        data.sheetsURL = localData.sheetsURL;
-                    }
+                    if (localData.sheetsURL && localData.sheetsURL !== DEFAULT_SHEETS_URL) data.sheetsURL = localData.sheetsURL;
                 }
             } catch(e) { console.error('Error cargando datos:', e); }
         }
+        function saveData() { localStorage.setItem('beautyData', JSON.stringify({ sheetsURL: data.sheetsURL })); }
 
-        function saveData() {
-            try {
-                localStorage.setItem('beautyData', JSON.stringify({
-                    sheetsURL: data.sheetsURL
-                }));
-            } catch(e) { console.error('Error guardando datos:', e); }
-        }
-
-        // ============================================
-        // CARGAR CONFIGURACIÓN DESDE SHEETS
-        // ============================================
         async function loadConfigFromSheets() {
-            if (!data.sheetsURL) {
-                document.getElementById('loading-text').textContent = 'Configurando...';
-                return false;
-            }
-
+            if (!data.sheetsURL) { document.getElementById('loading-text').textContent = 'Configurando...'; return false; }
             try {
                 document.getElementById('loading-text').textContent = 'Sincronizando con Google Sheets...';
-                
                 const response = await fetch(data.sheetsURL + '?action=getConfig');
+                if (!response.ok) throw new Error('HTTP ' + response.status);
                 const config = await response.json();
+                if (config.error) throw new Error(config.error);
                 
-                if (config.branches) data.branches = config.branches;
-                if (config.advisors) data.advisors = config.advisors;
-                if (config.regents) data.regents = config.regents;
-                if (config.leaders) data.leaders = config.leaders;
-                if (config.brands) data.brands = config.brands;
-                if (config.actions) data.actions = config.actions;
-                if (config.password) data.password = config.password;
+                data.branches = config.branches || [];
+                data.advisors = config.advisors || [];
+                data.regents = config.regents || [];
+                data.leaders = config.leaders || [];
+                data.brands = config.brands || [];
+                data.actions = config.actions || [];
                 
                 configLoaded = true;
                 updateSyncStatus('success', '✅ Listo para usar');
+                enableRoleButtons();
                 return true;
-                
             } catch (err) {
                 console.error('Error cargando configuración:', err);
-                updateSyncStatus('error', '⚠️ Sin conexión - Intenta recargar');
+                updateSyncStatus('error', '❌ Error de conexión');
+                document.getElementById('config-error').style.display = 'block';
                 return false;
             }
         }
 
-        // ============================================
-        // GUARDAR CONFIGURACIÓN EN SHEETS
-        // ============================================
-        async function saveConfigToSheets() {
-            if (!data.sheetsURL) {
-                showToast('❌ Error de configuración');
-                return false;
-            }
+        function enableRoleButtons() {
+            document.querySelectorAll('.role-btn').forEach(btn => btn.classList.add('ready'));
+        }
 
+        async function saveConfigToSheets() {
+            if (!data.sheetsURL) { showToast('❌ Error de configuración', true); return false; }
             try {
                 showToast('💾 Guardando configuración...');
-                
-                await fetch(data.sheetsURL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify({
-                        action: 'saveConfig',
-                        config: data
-                    })
-                });
-                
-                showToast('✅ Configuración guardada');
-                return true;
-                
+                const response = await fetch(data.sheetsURL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: 'saveConfig', config: data }) });
+                const resData = await response.json();
+                if (resData.result === 'success') { showToast('✅ Configuración guardada'); return true; }
+                throw new Error(resData.error || 'Error desconocido');
             } catch (err) {
                 console.error('Error guardando configuración:', err);
-                showToast('⚠️ Error al guardar');
+                showToast('⚠️ Error al guardar: ' + err.message, true);
                 return false;
             }
         }
 
         function updateSyncStatus(status, message) {
-            const statusEl = document.getElementById('sync-status');
-            if (statusEl) {
-                statusEl.textContent = message;
-                statusEl.className = 'sync-status ' + status;
-            }
+            const el = document.getElementById('sync-status');
+            if (el) { el.textContent = message; el.className = 'sync-status ' + status; }
         }
 
-        // ============================================
-        // NAVEGACIÓN ENTRE PANTALLAS
-        // ============================================
         function showScreen(id) {
+            if (id !== 'welcome-screen' && !configLoaded && !['admin-login-screen','admin-screen','loading-screen'].includes(id)) {
+                showToast('⚠️ Configura la conexión primero', true);
+                return;
+            }
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             
-            if (id === 'admin-screen') { 
-                renderAdmin();
-                document.getElementById('sheets-url').value = data.sheetsURL;
-            }
+            if (id === 'admin-screen') { renderAdmin(); document.getElementById('sheets-url').value = data.sheetsURL; }
             if (id === 'advisor-screen') { loadAdvisorSelects(); document.getElementById('advisor-date').valueAsDate = new Date(); }
-            if (id === 'regent-screen') { loadRegentSelects(); document.getElementById('regent-date').valueAsDate = new Date(); }
-            if (id === 'lider-screen') { loadLiderSelects(); document.getElementById('lider-date').valueAsDate = new Date(); }
-            if (id === 'welcome-screen') { 
-                resetAll();
-                if (configLoaded) {
-                    updateSyncStatus('success', '✅ Listo para usar');
-                }
-            }
+            if (id === 'regent-screen') { loadRegentSelects(); document.getElementById('regent-date').valueAsDate = new Date(); document.getElementById('regent-name-input').value = ''; }
+            if (id === 'lider-screen') { loadLiderSelects(); document.getElementById('lider-date').valueAsDate = new Date(); document.getElementById('lider-name-input').value = ''; }
+            if (id === 'evaluation-screen') { document.getElementById('eval-observations').value = ''; }
+            if (id === 'welcome-screen') { resetAll(); if (configLoaded) updateSyncStatus('success', '✅ Listo para usar'); }
         }
 
         function resetAll() {
-            withPurchase = 0;
-            withoutPurchase = 0;
-            brandUnits = {};
+            withPurchase = 0; withoutPurchase = 0; brandUnits = {};
             document.getElementById('with-purchase').textContent = '0';
             document.getElementById('without-purchase').textContent = '0';
             document.getElementById('total-attended').textContent = '0';
@@ -702,17 +369,22 @@
             document.getElementById('progress-units').style.width = '0%';
         }
 
-        // ============================================
-        // ADMIN - AUTENTICACIÓN
-        // ============================================
-        function verifyAdmin() {
+        async function verifyAdmin() {
             const pass = document.getElementById('admin-password').value;
-            if (pass === data.password) {
-                document.getElementById('admin-password').value = '';
-                showScreen('admin-screen');
-                showToast('✅ Acceso concedido');
-            } else {
-                showToast('❌ Contraseña incorrecta');
+            if (!pass) { showToast('❌ Ingresa contraseña', true); return; }
+            try {
+                showToast('🔐 Verificando...');
+                const response = await fetch(data.sheetsURL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: 'verifyPassword', password: pass }) });
+                const res = await response.json();
+                if (res.result === 'success') {
+                    document.getElementById('admin-password').value = '';
+                    showScreen('admin-screen');
+                    showToast('✅ Acceso concedido');
+                } else {
+                    showToast('❌ Contraseña incorrecta', true);
+                }
+            } catch (err) {
+                showToast('⚠️ Error de verificación', true);
             }
         }
 
@@ -720,659 +392,199 @@
             const current = document.getElementById('current-password').value;
             const newPass = document.getElementById('new-password').value;
             const confirm = document.getElementById('confirm-password').value;
-
-            if (current !== data.password) { showToast('❌ Contraseña actual incorrecta'); return; }
-            if (newPass.length < 6) { showToast('❌ Mínimo 6 caracteres'); return; }
-            if (newPass !== confirm) { showToast('❌ Las contraseñas no coinciden'); return; }
-
-            data.password = newPass;
-            saveData();
-            await saveConfigToSheets();
+            if (current.length < 1 || newPass.length < 6 || newPass !== confirm) { showToast('❌ Verifica los campos', true); return; }
             
-            document.getElementById('current-password').value = '';
-            document.getElementById('new-password').value = '';
-            document.getElementById('confirm-password').value = '';
-            document.getElementById('password-strength').textContent = '';
-            showToast('✅ Contraseña cambiada exitosamente');
+            try {
+                const res = await fetch(data.sheetsURL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: 'verifyPassword', password: current }) });
+                if ((await res.json()).result !== 'success') { showToast('❌ Contraseña actual incorrecta', true); return; }
+                
+                data.password = newPass;
+                saveData();
+                await saveConfigToSheets();
+                document.getElementById('current-password').value = '';
+                document.getElementById('new-password').value = '';
+                document.getElementById('confirm-password').value = '';
+                document.getElementById('password-strength').textContent = '';
+                showToast('✅ Contraseña cambiada exitosamente');
+            } catch (err) {
+                showToast('⚠️ Error al cambiar contraseña', true);
+            }
         }
 
         function checkPasswordStrength() {
             const pass = document.getElementById('new-password').value;
             const div = document.getElementById('password-strength');
             if (!pass) { div.textContent = ''; return; }
-            
-            let strength = 'weak', msg = '🔴 Débil';
-            if (pass.length >= 8) { strength = 'medium'; msg = '🟡 Media'; }
-            if (pass.length >= 10 && /[A-Z]/.test(pass) && /[0-9]/.test(pass) && /[!@#$%^&*]/.test(pass)) { 
-                strength = 'strong'; msg = '🟢 Fuerte ✓'; 
-            }
-            div.textContent = 'Fortaleza: ' + msg;
-            div.className = 'password-strength ' + strength;
+            let s = 'weak', m = '🔴 Débil';
+            if (pass.length >= 8) { s = 'medium'; m = '🟡 Media'; }
+            if (pass.length >= 10 && /[A-Z]/.test(pass) && /[0-9]/.test(pass) && /[!@#$%^&*]/.test(pass)) { s = 'strong'; m = '🟢 Fuerte ✓'; }
+            div.textContent = 'Fortaleza: ' + m;
+            div.className = 'password-strength ' + s;
         }
 
-        // ============================================
-        // ADMIN - RENDERIZADO
-        // ============================================
         function renderAdmin() {
-            const branchesContainer = document.getElementById('branches-container');
-            branchesContainer.innerHTML = '';
-            if (data.branches.length === 0) {
-                branchesContainer.innerHTML = '<p style="color:#666; text-align:center; padding:10px;">Sin sucursales</p>';
-            } else {
-                data.branches.forEach((b, i) => {
-                    branchesContainer.innerHTML += `
-                        <div class="list-item">
-                            <div class="list-item-header">
-                                <strong>🏪 ${b.Nombre || b.name}</strong>
-                                <div class="list-item-actions">
-                                    <button class="edit-btn" onclick="openBranchEdit(${i})">✏️</button>
-                                    <button class="delete-btn" onclick="deleteBranch(${i})">🗑️</button>
-                                </div>
-                            </div>
-                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; font-size:13px;">
-                                <div>💵 Bs: <strong>Bs. ${(b.Estimated_Bs || b.bs || 0).toLocaleString()}</strong></div>
-                                <div>📦 Uds: <strong>${b.Estimated_Units || b.units || 0} uds.</strong></div>
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-
+            const bc = document.getElementById('branches-container'); bc.innerHTML = '';
+            if (!data.branches.length) bc.innerHTML = '<p style="color:#666; text-align:center; padding:10px;">Sin sucursales</p>';
+            else data.branches.forEach((b,i) => { bc.innerHTML += `<div class="list-item"><div class="list-item-header"><strong>🏪 ${b.Nombre||b.name}</strong><div class="list-item-actions"><button class="edit-btn" onclick="openBranchEdit(${i})">✏️</button><button class="delete-btn" onclick="deleteBranch(${i})">🗑️</button></div></div><div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; font-size:13px;"><div>💵 Bs: <strong>Bs. ${(b.Estimated_Bs||b.bs||0).toLocaleString()}</strong></div><div>📦 Uds: <strong>${b.Estimated_Units||b.units||0} uds.</strong></div></div></div>`; });
             renderAdminList('advisors-container', data.advisors, 'advisor', '👤');
             renderAdminList('regents-container', data.regents, 'regent', '📋');
             renderAdminList('leaders-container', data.leaders, 'leader', '👔');
             renderAdminList('brands-container', data.brands, 'brand', '🏷️');
-
-            const actionsContainer = document.getElementById('actions-container');
-            actionsContainer.innerHTML = '';
-            if (data.actions.length === 0) {
-                actionsContainer.innerHTML = '<p style="color:#666; text-align:center; padding:10px;">Sin acciones</p>';
-            } else {
-                data.actions.forEach((a, i) => {
-                    actionsContainer.innerHTML += `
-                        <div class="list-item">
-                            <div class="list-item-header">
-                                <span style="font-size:13px; flex:1;">${i+1}. ${a.Accion || a}</span>
-                                <div class="list-item-actions">
-                                    <button class="edit-btn" onclick="openGenericEdit('action', ${i})">✏️</button>
-                                    <button class="delete-btn" onclick="deleteAction(${i})">🗑️</button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-
+            const ac = document.getElementById('actions-container'); ac.innerHTML = '';
+            if (!data.actions.length) ac.innerHTML = '<p style="color:#666; text-align:center; padding:10px;">Sin acciones</p>';
+            else data.actions.forEach((a,i) => { ac.innerHTML += `<div class="list-item"><div class="list-item-header"><span style="font-size:13px; flex:1;">${i+1}. ${a.Accion||a}</span><div class="list-item-actions"><button class="edit-btn" onclick="openGenericEdit('action', ${i})">✏️</button><button class="delete-btn" onclick="deleteAction(${i})">🗑️</button></div></div></div>`; });
             document.getElementById('sheets-url').value = data.sheetsURL;
         }
 
-        function renderAdminList(containerId, arr, type, emoji) {
-            const container = document.getElementById(containerId);
-            container.innerHTML = '';
-            if (arr.length === 0) {
-                container.innerHTML = '<p style="color:#666; text-align:center; padding:10px;">Sin registros</p>';
-                return;
-            }
-            arr.forEach((item, i) => {
-                const itemName = typeof item === 'object' ? (item.Nombre || item.name || item.Accion || '') : item;
-                container.innerHTML += `
-                    <div class="list-item">
-                        <div class="list-item-header">
-                            <span>${emoji} ${itemName}</span>
-                            <div class="list-item-actions">
-                                <button class="edit-btn" onclick="openGenericEdit('${type}', ${i})">✏️</button>
-                                <button class="delete-btn" onclick="deleteItem('${type}', ${i})">🗑️</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
+        function renderAdminList(cid, arr, type, emoji) {
+            const c = document.getElementById(cid); c.innerHTML = '';
+            if (!arr.length) { c.innerHTML = '<p style="color:#666; text-align:center; padding:10px;">Sin registros</p>'; return; }
+            arr.forEach((item, i) => { const n = typeof item === 'object' ? (item.Nombre||item.name||item.Accion||'') : item; c.innerHTML += `<div class="list-item"><div class="list-item-header"><span>${emoji} ${n}</span><div class="list-item-actions"><button class="edit-btn" onclick="openGenericEdit('${type}', ${i})">✏️</button><button class="delete-btn" onclick="deleteItem('${type}', ${i})">🗑️</button></div></div></div>`; });
         }
 
-        // ============================================
-        // ADMIN - SUCURSALES
-        // ============================================
-        async function addBranch() {
-            const name = document.getElementById('new-branch-name').value.trim();
-            const bs = parseFloat(document.getElementById('new-branch-bs').value) || 30000;
-            const units = parseFloat(document.getElementById('new-branch-units').value) || 300;
-            
-            if (!name) { showToast('❌ Ingresa un nombre para la sucursal'); return; }
-            
-            data.branches.push({ Nombre: name, Estimated_Bs: bs, Estimated_Units: units });
-            await saveConfigToSheets();
-            renderAdmin();
-            
-            document.getElementById('new-branch-name').value = '';
-            document.getElementById('new-branch-bs').value = '';
-            document.getElementById('new-branch-units').value = '';
-            showToast('✅ Sucursal agregada');
-        }
+        async function addBranch() { const n = document.getElementById('new-branch-name').value.trim(); const bs = parseFloat(document.getElementById('new-branch-bs').value)||30000; const u = parseFloat(document.getElementById('new-branch-units').value)||300; if(!n){showToast('❌ Ingresa nombre',true);return;} data.branches.push({Nombre:n, Estimated_Bs:bs, Estimated_Units:u}); await saveConfigToSheets(); renderAdmin(); document.getElementById('new-branch-name').value=''; document.getElementById('new-branch-bs').value=''; document.getElementById('new-branch-units').value=''; showToast('✅ Sucursal agregada'); }
+        async function deleteBranch(i) { if(confirm('¿Eliminar?')){data.branches.splice(i,1);await saveConfigToSheets();renderAdmin();showToast('✅ Eliminada');} }
+        function openBranchEdit(i){const b=data.branches[i];document.getElementById('edit-branch-index').value=i;document.getElementById('edit-branch-name').value=b.Nombre||b.name||'';document.getElementById('edit-branch-bs').value=b.Estimated_Bs||b.bs||0;document.getElementById('edit-branch-units').value=b.Estimated_Units||b.units||0;document.getElementById('edit-branch-modal').classList.add('active');}
+        function closeBranchModal(){document.getElementById('edit-branch-modal').classList.remove('active');}
+        async function saveBranchEdit(){const i=parseInt(document.getElementById('edit-branch-index').value);const n=document.getElementById('edit-branch-name').value.trim();if(!n){showToast('❌ Ingresa nombre',true);return;}data.branches[i].Nombre=n;data.branches[i].Estimated_Bs=parseFloat(document.getElementById('edit-branch-bs').value)||0;data.branches[i].Estimated_Units=parseFloat(document.getElementById('edit-branch-units').value)||0;await saveConfigToSheets();renderAdmin();closeBranchModal();showToast('✅ Guardado');}
 
-        async function deleteBranch(i) {
-            if (confirm('¿Eliminar esta sucursal?')) {
-                data.branches.splice(i, 1);
-                await saveConfigToSheets();
-                renderAdmin();
-                showToast('✅ Sucursal eliminada');
-            }
-        }
+        async function addAdvisor(){await addItemToList('advisor','new-advisor','Asesora',data.advisors);}
+        async function addRegent(){await addItemToList('regent','new-regent','Regente',data.regents);}
+        async function addLeader(){await addItemToList('leader','new-leader','Líder',data.leaders);}
+        async function addBrand(){await addItemToList('brand','new-brand','Marca',data.brands);}
+        async function addAction(){await addItemToList('action','new-action','Acción',data.actions);}
+        async function addItemToList(type,inputId,label,arr){const n=document.getElementById(inputId).value.trim();if(!n){showToast(`❌ Ingresa nombre`,true);return;}arr.push(n);await saveConfigToSheets();renderAdmin();document.getElementById(inputId).value='';showToast(`✅ ${label} agregada`);}
+        async function deleteItem(type,i){if(!confirm('¿Eliminar?'))return;if(type==='advisor')data.advisors.splice(i,1);else if(type==='regent')data.regents.splice(i,1);else if(type==='leader')data.leaders.splice(i,1);else if(type==='brand')data.brands.splice(i,1);else if(type==='action')data.actions.splice(i,1);await saveConfigToSheets();renderAdmin();showToast('✅ Eliminada');}
+        function openGenericEdit(type,i){document.getElementById('edit-generic-type').value=type;document.getElementById('edit-generic-index').value=i;document.getElementById('edit-modal-title').textContent='Editar '+type.charAt(0).toUpperCase()+type.slice(1);let arr;if(type==='advisor')arr=data.advisors;else if(type==='regent')arr=data.regents;else if(type==='leader')arr=data.leaders;else if(type==='brand')arr=data.brands;else if(type==='action')arr=data.actions;const item=arr[i];document.getElementById('edit-generic-input').value=typeof item==='object'?(item.Nombre||item.Accion||''):item;document.getElementById('edit-modal').classList.add('active');}
+        function closeEditModal(){document.getElementById('edit-modal').classList.remove('active');}
+        async function saveGenericEdit(){const type=document.getElementById('edit-generic-type').value;const i=parseInt(document.getElementById('edit-generic-index').value);const val=document.getElementById('edit-generic-input').value.trim();if(!val){showToast('❌ Ingresa valor',true);return;}let arr;if(type==='advisor')arr=data.advisors;else if(type==='regent')arr=data.regents;else if(type==='leader')arr=data.leaders;else if(type==='brand')arr=data.brands;else if(type==='action')arr=data.actions;arr[i]=val;await saveConfigToSheets();renderAdmin();closeEditModal();showToast('✅ Guardado');}
+        function updateSheetsURL(){const u=prompt('Nueva URL:',data.sheetsURL);if(u&&u.trim()!==''){data.sheetsURL=u.trim();saveData();document.getElementById('sheets-url').value=data.sheetsURL;showToast('✅ URL actualizada');}}
+        async function syncConfig(){showToast('🔄 Sincronizando...');const s=await loadConfigFromSheets();if(s){renderAdmin();showToast('✅ Sincronizado');}}
 
-        function openBranchEdit(i) {
-            const branch = data.branches[i];
-            document.getElementById('edit-branch-index').value = i;
-            document.getElementById('edit-branch-name').value = branch.Nombre || branch.name || '';
-            document.getElementById('edit-branch-bs').value = branch.Estimated_Bs || branch.bs || 0;
-            document.getElementById('edit-branch-units').value = branch.Estimated_Units || branch.units || 0;
-            document.getElementById('edit-branch-modal').classList.add('active');
-        }
+        function loadAdvisorSelects(){const ns=document.getElementById('advisor-name-select');const bs=document.getElementById('advisor-branch-select');ns.innerHTML='<option value="">Selecciona tu nombre</option>';data.advisors.forEach(a=>{const n=typeof a==='object'?(a.Nombre||a.name):a;ns.innerHTML+=`<option value="${n}">${n}</option>`;});bs.innerHTML='<option value="">Selecciona sucursal</option>';data.branches.forEach((b,i)=>{const n=b.Nombre||b.name||'Sin nombre';const bs_v=b.Estimated_Bs||b.bs||0;const u=b.Estimated_Units||b.units||0;bs.innerHTML+=`<option value="${i}" data-bs="${bs_v}" data-units="${u}">${n}</option>`;});document.getElementById('estimates-card').style.display='none';}
+        function showBranchEstimates(){const s=document.getElementById('advisor-branch-select');const o=s.options[s.selectedIndex];if(o.value){const bs=parseFloat(o.getAttribute('data-bs'))||0;const u=parseFloat(o.getAttribute('data-units'))||0;currentEstimates={bs,units:u};document.getElementById('estimate-bs-display').textContent='Bs. '+bs.toLocaleString();document.getElementById('estimate-units-display').textContent=u+' uds.';document.getElementById('estimates-card').style.display='block';}else{document.getElementById('estimates-card').style.display='none';}}
+        function goToSales(){const n=document.getElementById('advisor-name-select').value;const bi=document.getElementById('advisor-branch-select').value;if(!n||!bi){showToast('❌ Selecciona nombre y sucursal',true);return;}const b=data.branches[bi];sessionStorage.setItem('advisorData',JSON.stringify({name:n,branch:b.Nombre||b.name,estimates:{bs:b.Estimated_Bs||b.bs||0,units:b.Estimated_Units||b.units||0}}));document.getElementById('monthly-bs').textContent='Bs. '+currentEstimates.bs.toLocaleString();document.getElementById('monthly-units').textContent=currentEstimates.units+' uds.';showScreen('sales-screen');}
+        function calcProgress(){const d=parseFloat(document.getElementById('daily-bs').value)||0;const c=currentEstimates.bs>0?(d/currentEstimates.bs*100):0;document.getElementById('compliance-bs').textContent=c.toFixed(1)+'%';document.getElementById('progress-bs').style.width=Math.min(c,100)+'%';}
+        function calcProgressUnits(){const d=parseFloat(document.getElementById('daily-units').value)||0;const c=currentEstimates.units>0?(d/currentEstimates.units*100):0;document.getElementById('compliance-units').textContent=c.toFixed(1)+'%';document.getElementById('progress-units').style.width=Math.min(c,100)+'%';}
+        function goToConversion(){showScreen('conversion-screen');}
+        function updateCounter(type,ch){if(type==='with'){withPurchase=Math.max(0,withPurchase+ch);document.getElementById('with-purchase').textContent=withPurchase;}else{withoutPurchase=Math.max(0,withoutPurchase+ch);document.getElementById('without-purchase').textContent=withoutPurchase;}const t=withPurchase+withoutPurchase;document.getElementById('total-attended').textContent=t;document.getElementById('conversion-rate').textContent=t>0?((withPurchase/t*100).toFixed(1)+'%'):'0%';}
+        function goToBrands(){const c=document.getElementById('brands-counters-container');c.innerHTML='';brandUnits={};if(!data.brands.length){c.innerHTML='<p style="text-align:center; color:#666; padding:20px;">No hay marcas configuradas.</p>';}else{data.brands.forEach(brand=>{const bn=typeof brand==='object'?(brand.Nombre||brand.name):brand;brandUnits[bn]=0;const sid=bn.replace(/\s+/g,'-').replace(/[^a-zA-Z0-9-]/g,'');c.innerHTML+=`<div class="brand-item"><span class="brand-name"><strong>${bn}</strong></span><div class="brand-counter"><button onclick="updateBrandUnit('${bn}',-1)">−</button><span id="brand-${sid}">0</span><button onclick="updateBrandUnit('${bn}',1)">+</button></div></div>`;});}updateTotalBrands();showScreen('brands-screen');}
+        function updateBrandUnit(b,ch){brandUnits[b]=Math.max(0,brandUnits[b]+ch);const sid=b.replace(/\s+/g,'-').replace(/[^a-zA-Z0-9-]/g,'');document.getElementById('brand-'+sid).textContent=brandUnits[b];updateTotalBrands();}
+        function updateTotalBrands(){document.getElementById('total-brands-units').textContent=Object.values(brandUnits).reduce((s,v)=>s+v,0);}
 
-        function closeBranchModal() {
-            document.getElementById('edit-branch-modal').classList.remove('active');
-        }
-
-        async function saveBranchEdit() {
-            const i = parseInt(document.getElementById('edit-branch-index').value);
-            const name = document.getElementById('edit-branch-name').value.trim();
-            if (!name) { showToast('❌ Ingresa un nombre'); return; }
-            
-            data.branches[i].Nombre = name;
-            data.branches[i].Estimated_Bs = parseFloat(document.getElementById('edit-branch-bs').value) || 0;
-            data.branches[i].Estimated_Units = parseFloat(document.getElementById('edit-branch-units').value) || 0;
-            
-            await saveConfigToSheets();
-            renderAdmin();
-            closeBranchModal();
-            showToast('✅ Cambios guardados');
-        }
-
-        // ============================================
-        // ADMIN - LISTAS GENÉRICAS
-        // ============================================
-        async function addAdvisor() { await addItemToList('advisor', 'new-advisor', 'Asesora', data.advisors); }
-        async function addRegent() { await addItemToList('regent', 'new-regent', 'Regente', data.regents); }
-        async function addLeader() { await addItemToList('leader', 'new-leader', 'Líder', data.leaders); }
-        async function addBrand() { await addItemToList('brand', 'new-brand', 'Marca', data.brands); }
-        async function addAction() { await addItemToList('action', 'new-action', 'Acción', data.actions); }
-
-        async function addItemToList(type, inputId, label, array) {
-            const name = document.getElementById(inputId).value.trim();
-            if (!name) { showToast(`❌ Ingresa un nombre para ${label.toLowerCase()}`); return; }
-            
-            array.push(name);
-            await saveConfigToSheets();
-            renderAdmin();
-            document.getElementById(inputId).value = '';
-            showToast(`✅ ${label} agregada`);
-        }
-
-        async function deleteItem(type, i) {
-            if (!confirm('¿Eliminar este elemento?')) return;
-            
-            if (type === 'advisor') data.advisors.splice(i, 1);
-            else if (type === 'regent') data.regents.splice(i, 1);
-            else if (type === 'leader') data.leaders.splice(i, 1);
-            else if (type === 'brand') data.brands.splice(i, 1);
-            else if (type === 'action') data.actions.splice(i, 1);
-            
-            await saveConfigToSheets();
-            renderAdmin();
-            showToast('✅ Elemento eliminado');
-        }
-
-        function openGenericEdit(type, i) {
-            document.getElementById('edit-generic-type').value = type;
-            document.getElementById('edit-generic-index').value = i;
-            document.getElementById('edit-modal-title').textContent = 'Editar ' + type.charAt(0).toUpperCase() + type.slice(1);
-            
-            let arr;
-            if (type === 'advisor') arr = data.advisors;
-            else if (type === 'regent') arr = data.regents;
-            else if (type === 'leader') arr = data.leaders;
-            else if (type === 'brand') arr = data.brands;
-            else if (type === 'action') arr = data.actions;
-            
-            const item = arr[i];
-            document.getElementById('edit-generic-input').value = typeof item === 'object' ? (item.Nombre || item.Accion || '') : item;
-            document.getElementById('edit-modal').classList.add('active');
-        }
-
-        function closeEditModal() {
-            document.getElementById('edit-modal').classList.remove('active');
-        }
-
-        async function saveGenericEdit() {
-            const type = document.getElementById('edit-generic-type').value;
-            const i = parseInt(document.getElementById('edit-generic-index').value);
-            const val = document.getElementById('edit-generic-input').value.trim();
-            if (!val) { showToast('❌ Ingresa un valor'); return; }
-            
-            let arr;
-            if (type === 'advisor') arr = data.advisors;
-            else if (type === 'regent') arr = data.regents;
-            else if (type === 'leader') arr = data.leaders;
-            else if (type === 'brand') arr = data.brands;
-            else if (type === 'action') arr = data.actions;
-            
-            arr[i] = val;
-            await saveConfigToSheets();
-            renderAdmin();
-            closeEditModal();
-            showToast('✅ Cambios guardados');
-        }
-
-        function updateSheetsURL() {
-            const newUrl = prompt('Nueva URL de Google Apps Script:', data.sheetsURL);
-            if (newUrl && newUrl.trim() !== '') {
-                data.sheetsURL = newUrl.trim();
-                saveData();
-                document.getElementById('sheets-url').value = data.sheetsURL;
-                showToast('✅ URL actualizada');
-            }
-        }
-
-        async function syncConfig() {
-            showToast('🔄 Sincronizando...');
-            const success = await loadConfigFromSheets();
-            if (success) {
-                renderAdmin();
-                showToast('✅ Configuración sincronizada');
-            }
-        }
-
-        // ============================================
-        // ASESORA - SELECTS Y ESTIMADOS
-        // ============================================
-        function loadAdvisorSelects() {
-            const nameSelect = document.getElementById('advisor-name-select');
-            const branchSelect = document.getElementById('advisor-branch-select');
-            
-            nameSelect.innerHTML = '<option value="">Selecciona tu nombre</option>';
-            data.advisors.forEach(a => { 
-                const name = typeof a === 'object' ? (a.Nombre || a.name) : a;
-                nameSelect.innerHTML += `<option value="${name}">${name}</option>`; 
-            });
-            
-            branchSelect.innerHTML = '<option value="">Selecciona sucursal</option>';
-            data.branches.forEach((b, i) => {
-                const name = b.Nombre || b.name || 'Sin nombre';
-                const bs = b.Estimated_Bs || b.bs || 0;
-                const units = b.Estimated_Units || b.units || 0;
-                branchSelect.innerHTML += `<option value="${i}" data-bs="${bs}" data-units="${units}">${name}</option>`;
-            });
-            document.getElementById('estimates-card').style.display = 'none';
-        }
-
-        function showBranchEstimates() {
-            const select = document.getElementById('advisor-branch-select');
-            const option = select.options[select.selectedIndex];
-            if (option.value) {
-                const bs = parseFloat(option.getAttribute('data-bs')) || 0;
-                const units = parseFloat(option.getAttribute('data-units')) || 0;
-                currentEstimates = {bs, units};
-                document.getElementById('estimate-bs-display').textContent = 'Bs. ' + bs.toLocaleString();
-                document.getElementById('estimate-units-display').textContent = units + ' uds.';
-                document.getElementById('estimates-card').style.display = 'block';
-            } else {
-                document.getElementById('estimates-card').style.display = 'none';
-            }
-        }
-
-        function goToSales() {
-            const name = document.getElementById('advisor-name-select').value;
-            const branchIdx = document.getElementById('advisor-branch-select').value;
-            if (!name || !branchIdx) { showToast('❌ Selecciona tu nombre y sucursal'); return; }
-            
-            const branch = data.branches[branchIdx];
-            sessionStorage.setItem('advisorData', JSON.stringify({
-                name, 
-                branch: branch.Nombre || branch.name,
-                estimates: {
-                    bs: branch.Estimated_Bs || branch.bs || 0,
-                    units: branch.Estimated_Units || branch.units || 0
-                }
-            }));
-            
-            document.getElementById('monthly-bs').textContent = 'Bs. ' + currentEstimates.bs.toLocaleString();
-            document.getElementById('monthly-units').textContent = currentEstimates.units + ' uds.';
-            showScreen('sales-screen');
-        }
-
-        function calcProgress() {
-            const daily = parseFloat(document.getElementById('daily-bs').value) || 0;
-            const compliance = currentEstimates.bs > 0 ? (daily / currentEstimates.bs * 100) : 0;
-            document.getElementById('compliance-bs').textContent = compliance.toFixed(1) + '%';
-            document.getElementById('progress-bs').style.width = Math.min(compliance, 100) + '%';
-        }
-
-        function calcProgressUnits() {
-            const daily = parseFloat(document.getElementById('daily-units').value) || 0;
-            const compliance = currentEstimates.units > 0 ? (daily / currentEstimates.units * 100) : 0;
-            document.getElementById('compliance-units').textContent = compliance.toFixed(1) + '%';
-            document.getElementById('progress-units').style.width = Math.min(compliance, 100) + '%';
-        }
-
-        function goToConversion() { showScreen('conversion-screen'); }
-
-        function updateCounter(type, change) {
-            if (type === 'with') { 
-                withPurchase = Math.max(0, withPurchase + change); 
-                document.getElementById('with-purchase').textContent = withPurchase; 
-            } else { 
-                withoutPurchase = Math.max(0, withoutPurchase + change); 
-                document.getElementById('without-purchase').textContent = withoutPurchase; 
-            }
-            const total = withPurchase + withoutPurchase;
-            document.getElementById('total-attended').textContent = total;
-            document.getElementById('conversion-rate').textContent = total > 0 ? ((withPurchase / total * 100).toFixed(1) + '%') : '0%';
-        }
-
-        function goToBrands() {
-            const container = document.getElementById('brands-counters-container');
-            container.innerHTML = '';
-            brandUnits = {};
-            
-            if (data.brands.length === 0) {
-                container.innerHTML = '<p style="text-align:center; color:#666; padding:20px;">No hay marcas configuradas. Contacta al administrador.</p>';
-            } else {
-                data.brands.forEach(brand => {
-                    const brandName = typeof brand === 'object' ? (brand.Nombre || brand.name) : brand;
-                    brandUnits[brandName] = 0;
-                    const safeId = brandName.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
-                    container.innerHTML += `
-                        <div class="brand-item">
-                            <span class="brand-name"><strong>${brandName}</strong></span>
-                            <div class="brand-counter">
-                                <button onclick="updateBrandUnit('${brandName}', -1)">−</button>
-                                <span id="brand-${safeId}">0</span>
-                                <button onclick="updateBrandUnit('${brandName}', 1)">+</button>
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-            updateTotalBrands();
-            showScreen('brands-screen');
-        }
-
-        function updateBrandUnit(brand, change) {
-            brandUnits[brand] = Math.max(0, brandUnits[brand] + change);
-            const safeId = brand.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
-            document.getElementById('brand-' + safeId).textContent = brandUnits[brand];
-            updateTotalBrands();
-        }
-
-        function updateTotalBrands() {
-            const total = Object.values(brandUnits).reduce((sum, v) => sum + v, 0);
-            document.getElementById('total-brands-units').textContent = total;
-        }
-
-        // ============================================
-        // ENVIAR REGISTRO A SHEETS
-        // ============================================
         async function submitRecord() {
-            const advisorData = JSON.parse(sessionStorage.getItem('advisorData'));
-            if (!advisorData) { showToast('❌ Error de sesión'); showScreen('welcome-screen'); return; }
-            
+            const btn = document.getElementById('btn-submit-record');
             const dailyBs = parseFloat(document.getElementById('daily-bs').value) || 0;
             const dailyUnits = parseFloat(document.getElementById('daily-units').value) || 0;
+            
+            if (dailyBs < 0 || dailyUnits < 0) { showToast('❌ No se permiten valores negativos', true); return; }
+            if (dailyBs === 0 && dailyUnits === 0) { if (!confirm('¿Registrar venta en 0 Bs y 0 Uds?')) return; }
+            
+            const advisorData = JSON.parse(sessionStorage.getItem('advisorData'));
+            if (!advisorData) { showToast('❌ Error de sesión', true); showScreen('welcome-screen'); return; }
             
             const complianceBs = currentEstimates.bs > 0 ? ((dailyBs / currentEstimates.bs) * 100).toFixed(1) : '0.0';
             const complianceUnits = currentEstimates.units > 0 ? ((dailyUnits / currentEstimates.units) * 100).toFixed(1) : '0.0';
             const totalClientes = withPurchase + withoutPurchase;
             
-            const marcasObj = {};
-            const marcasArray = [];
-            let totalMarcas = 0;
-            
+            const marcasObj = {}, marcasArray = []; let totalMarcas = 0;
             data.brands.forEach(brand => {
-                const brandName = typeof brand === 'object' ? (brand.Nombre || brand.name) : brand;
-                const cantidad = brandUnits[brandName] || 0;
-                marcasObj[brandName] = cantidad;
-                marcasArray.push(brandName);
-                totalMarcas += cantidad;
+                const bn = typeof brand === 'object' ? (brand.Nombre || brand.name) : brand;
+                const cant = brandUnits[bn] || 0;
+                marcasObj[bn] = cant; marcasArray.push(bn); totalMarcas += cant;
             });
 
             const record = {
                 tipo: 'venta',
-                fecha: new Date().toISOString(),
                 nombre: advisorData.name,
                 sucursal: advisorData.branch,
-                ventaBs: dailyBs,
-                ventaUds: dailyUnits,
-                conCompra: withPurchase,
-                sinCompra: withoutPurchase,
-                totalClientes: totalClientes,
-                conversion: document.getElementById('conversion-rate').textContent,
-                marcasObj: marcasObj,
-                marcasData: marcasArray,
-                marcas: totalMarcas,
-                estimadoBs: currentEstimates.bs,
-                estimadoUds: currentEstimates.units,
-                cumplimientoBs: complianceBs + '%',
-                cumplimientoUds: complianceUnits + '%'
+                ventaBs: dailyBs, ventaUds: dailyUnits,
+                conCompra: withPurchase, sinCompra: withoutPurchase,
+                totalClientes, conversion: document.getElementById('conversion-rate').textContent,
+                marcasObj, marcasData: marcasArray, marcas: totalMarcas,
+                estimadoBs: currentEstimates.bs, estimadoUds: currentEstimates.units,
+                cumplimientoBs: complianceBs + '%', cumplimientoUds: complianceUnits + '%'
             };
 
-            if (data.sheetsURL) {
-                try {
-                    showToast('📤 Enviando...');
-                    await fetch(data.sheetsURL, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'text/plain' },
-                        body: JSON.stringify(record)
-                    });
-                    showToast('✅ Registro enviado');
-                } catch (err) {
-                    console.error('Error:', err);
-                    showToast('⚠️ Error al enviar');
-                }
-            }
-
-            document.getElementById('summary-bs').textContent = complianceBs + '%';
-            document.getElementById('summary-units').textContent = complianceUnits + '%';
-            document.getElementById('summary-daily').textContent = 'Bs. ' + dailyBs.toLocaleString();
-            document.getElementById('summary-clients').textContent = totalClientes;
-            document.getElementById('summary-conversion').textContent = document.getElementById('conversion-rate').textContent;
-            document.getElementById('summary-brands').textContent = totalMarcas;
-
-            showScreen('summary-screen');
-        }
-
-        // ============================================
-        // REGENTE Y LÍDER - EVALUACIONES
-        // ============================================
-        function loadRegentSelects() {
-            document.getElementById('regent-name-select').innerHTML = 
-                '<option value="">Selecciona regente</option>' + 
-                data.regents.map(r => {
-                    const name = typeof r === 'object' ? (r.Nombre || r.name) : r;
-                    return `<option value="${name}">${name}</option>`;
-                }).join('');
-            document.getElementById('regent-advisor-select').innerHTML = 
-                '<option value="">Selecciona asesora</option>' + 
-                data.advisors.map(a => {
-                    const name = typeof a === 'object' ? (a.Nombre || a.name) : a;
-                    return `<option value="${name}">${name}</option>`;
-                }).join('');
-            document.getElementById('regent-branch-select').innerHTML = 
-                '<option value="">Selecciona sucursal</option>' + 
-                data.branches.map(b => {
-                    const name = b.Nombre || b.name || 'Sin nombre';
-                    return `<option value="${name}">${name}</option>`;
-                }).join('');
-        }
-
-        function loadLiderSelects() {
-            document.getElementById('lider-name-select').innerHTML = 
-                '<option value="">Selecciona líder</option>' + 
-                data.leaders.map(l => {
-                    const name = typeof l === 'object' ? (l.Nombre || l.name) : l;
-                    return `<option value="${name}">${name}</option>`;
-                }).join('');
-            document.getElementById('lider-advisor-select').innerHTML = 
-                '<option value="">Selecciona asesora</option>' + 
-                data.advisors.map(a => {
-                    const name = typeof a === 'object' ? (a.Nombre || a.name) : a;
-                    return `<option value="${name}">${name}</option>`;
-                }).join('');
-            document.getElementById('lider-branch-select').innerHTML = 
-                '<option value="">Selecciona sucursal</option>' + 
-                data.branches.map(b => {
-                    const name = b.Nombre || b.name || 'Sin nombre';
-                    return `<option value="${name}">${name}</option>`;
-                }).join('');
-        }
-
-        function startEvaluation(rol) {
-            currentRol = rol;
-            
-            let nombre, asesora, sucursal;
-            
-            if (rol === 'regente') {
-                nombre = document.getElementById('regent-name-select').value;
-                asesora = document.getElementById('regent-advisor-select').value;
-                sucursal = document.getElementById('regent-branch-select').value;
-            } else {
-                nombre = document.getElementById('lider-name-select').value;
-                asesora = document.getElementById('lider-advisor-select').value;
-                sucursal = document.getElementById('lider-branch-select').value;
-            }
-            
-            if (!nombre || !asesora || !sucursal) { showToast('❌ Completa todos los campos'); return; }
-
-            evalData = {rol, nombre, asesora, sucursal, actions: {}};
-            const container = document.getElementById('evaluation-actions-container');
-            container.innerHTML = '';
-            
-            if (data.actions.length === 0) {
-                container.innerHTML = '<p style="text-align:center; color:#666; padding:20px;">No hay acciones configuradas.</p>';
-            } else {
-                data.actions.forEach((action, i) => {
-                    const actionText = typeof action === 'object' ? (action.Accion || action.accion) : action;
-                    container.innerHTML += `
-                        <div class="evaluation-item">
-                            <h4>${i+1}. ${actionText}</h4>
-                            <div class="evaluation-options">
-                                <div class="eval-option" onclick="selectEval(${i}, 'yes', this)">SI</div>
-                                <div class="eval-option" onclick="selectEval(${i}, 'no', this)">NO</div>
-                                <div class="eval-option" onclick="selectEval(${i}, 'na', this)">N/A</div>
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-            updateEvalScore();
-            showScreen('evaluation-screen');
-        }
-
-        function selectEval(i, val, el) {
-            el.parentElement.querySelectorAll('.eval-option').forEach(o => o.classList.remove('selected', 'yes', 'no', 'na'));
-            el.classList.add('selected', val);
-            evalData.actions[i] = val;
-            updateEvalScore();
-        }
-
-        function updateEvalScore() {
-            const actions = evalData.actions;
-            const yes = Object.values(actions).filter(v => v === 'yes').length;
-            const total = Object.values(actions).filter(v => v !== 'na').length;
-            const score = total > 0 ? (yes / total * 100) : 0;
-            document.getElementById('eval-score').textContent = score.toFixed(0) + '%';
-            document.getElementById('eval-count').textContent = yes + '/' + total;
-        }
-
-        async function submitEvaluation() {
-            if (Object.keys(evalData.actions).length === 0) { showToast('❌ Evalúa al menos una acción'); return; }
-            
-            const yes = Object.values(evalData.actions).filter(v => v === 'yes').length;
-            const no = Object.values(evalData.actions).filter(v => v === 'no').length;
-            const na = Object.values(evalData.actions).filter(v => v === 'na').length;
-            const total = yes + no;
-            const score = total > 0 ? (yes / total * 100) : 0;
-
-            const evaluation = {
-                fecha: new Date().toISOString(),
-                asesora: evalData.asesora,
-                sucursal: evalData.sucursal,
-                calificacion: score.toFixed(0) + '%',
-                si: yes,
-                no: no,
-                na: na,
-                obs: document.getElementById('eval-observations').value
-            };
-
-            if (evalData.rol === 'regente') {
-                evaluation.tipo = 'evaluacion_regente';
-                evaluation.regente = evalData.nombre;
-            } else {
-                evaluation.tipo = 'evaluacion_lider';
-                evaluation.lider = evalData.nombre;
-            }
-
-            if (data.sheetsURL) {
-                try {
-                    showToast('📤 Enviando...');
-                    await fetch(data.sheetsURL, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'text/plain' },
-                        body: JSON.stringify(evaluation)
-                    });
-                    showToast('✅ Evaluación enviada');
-                } catch (err) {
-                    console.error('Error:', err);
-                    showToast('⚠️ Error al enviar');
-                }
-            }
-
-            document.getElementById('final-score').textContent = score.toFixed(0) + '%';
-            document.getElementById('final-yes').textContent = yes;
-            document.getElementById('final-no').textContent = no;
-            document.getElementById('final-na').textContent = na;
-            showScreen('evaluation-sent-screen');
-        }
-
-        // ============================================
-        // UTILIDADES
-        // ============================================
-        function showToast(msg) {
-            const toast = document.getElementById('toast');
-            toast.textContent = msg;
-            toast.classList.add('active');
-            setTimeout(() => toast.classList.remove('active'), 3500);
-        }
-
-        document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('modal') || e.target.classList.contains('close-modal')) {
-                document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
-            }
-        });
-
-        // ============================================
-        // INICIALIZACIÓN
-        // ============================================
-        document.addEventListener('DOMContentLoaded', async function() {
-            loadData();
-            
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('advisor-date').value = today;
-            document.getElementById('regent-date').value = today;
-            document.getElementById('lider-date').value = today;
-            
-            if (data.sheetsURL) {
-                const success = await loadConfigFromSheets();
-                if (success) {
-                    showScreen('welcome-screen');
+            btn.disabled = true; btn.textContent = 'Enviando...';
+            try {
+                const response = await fetch(data.sheetsURL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(record) });
+                const resData = await response.json();
+                if (resData.result === 'success') {
+                    document.getElementById('summary-bs').textContent = complianceBs + '%';
+                    document.getElementById('summary-units').textContent = complianceUnits + '%';
+                    document.getElementById('summary-daily').textContent = 'Bs. ' + dailyBs.toLocaleString();
+                    document.getElementById('summary-clients').textContent = totalClientes;
+                    document.getElementById('summary-conversion').textContent = document.getElementById('conversion-rate').textContent;
+                    document.getElementById('summary-brands').textContent = totalMarcas;
+                    showScreen('summary-screen');
                 } else {
-                    document.getElementById('loading-text').textContent = 'Verifica tu conexión a internet';
-                    setTimeout(() => showScreen('welcome-screen'), 3000);
+                    showToast('❌ Error: ' + (resData.error || 'Desconocido'), true);
                 }
-            } else {
-                document.getElementById('loading-text').textContent = 'Configuración pendiente';
-                setTimeout(() => showScreen('welcome-screen'), 2000);
+            } catch (err) {
+                showToast('⚠️ Error de red: ' + err.message, true);
+            } finally {
+                btn.disabled = false; btn.textContent = '✓ Enviar Registro';
             }
-        });
+        }
+
+        function loadRegentSelects(){document.getElementById('regent-advisor-select').innerHTML='<option value="">Selecciona asesora</option>'+data.advisors.map(a=>{const n=typeof a==='object'?(a.Nombre||a.name):a;return`<option value="${n}">${n}</option>`;}).join('');document.getElementById('regent-branch-select').innerHTML='<option value="">Selecciona sucursal</option>'+data.branches.map(b=>{const n=b.Nombre||b.name||'Sin nombre';return`<option value="${n}">${n}</option>`;}).join('');}
+        function loadLiderSelects(){document.getElementById('lider-advisor-select').innerHTML='<option value="">Selecciona asesora</option>'+data.advisors.map(a=>{const n=typeof a==='object'?(a.Nombre||a.name):a;return`<option value="${n}">${n}</option>`;}).join('');document.getElementById('lider-branch-select').innerHTML='<option value="">Selecciona sucursal</option>'+data.branches.map(b=>{const n=b.Nombre||b.name||'Sin nombre';return`<option value="${n}">${n}</option>`;}).join('');}
+        
+        function startEvaluation(rol){
+            currentRol=rol;let nombre,asesora,sucursal;
+            if(rol==='regente'){nombre=document.getElementById('regent-name-input').value.trim();asesora=document.getElementById('regent-advisor-select').value;sucursal=document.getElementById('regent-branch-select').value;}
+            else{nombre=document.getElementById('lider-name-input').value.trim();asesora=document.getElementById('lider-advisor-select').value;sucursal=document.getElementById('lider-branch-select').value;}
+            if(!nombre){showToast('❌ Ingresa tu nombre',true);return;}
+            if(!asesora){showToast('❌ Selecciona asesora',true);return;}
+            if(!sucursal){showToast('❌ Selecciona sucursal',true);return;}
+            evalData={rol,nombre,asesora,sucursal,actions:{}};
+            const c=document.getElementById('evaluation-actions-container');c.innerHTML='';
+            if(!data.actions.length){c.innerHTML='<p style="text-align:center;color:#666;padding:20px;">Sin acciones configuradas.</p>';}
+            else{data.actions.forEach((a,i)=>{const at=typeof a==='object'?(a.Accion||a.accion):a;c.innerHTML+=`<div class="evaluation-item"><h4>${i+1}. ${at}</h4><div class="evaluation-options"><div class="eval-option" onclick="selectEval(${i},'yes',this)">SI</div><div class="eval-option" onclick="selectEval(${i},'no',this)">NO</div><div class="eval-option" onclick="selectEval(${i},'na',this)">N/A</div></div></div>`;});}
+            updateEvalScore();showScreen('evaluation-screen');
+        }
+        function selectEval(i,val,el){el.parentElement.querySelectorAll('.eval-option').forEach(o=>o.classList.remove('selected','yes','no','na'));el.classList.add('selected',val);evalData.actions[i]=val;updateEvalScore();}
+        function updateEvalScore(){const a=evalData.actions;const y=Object.values(a).filter(v=>v==='yes').length;const t=Object.values(a).filter(v=>v!=='na').length;const sc=t>0?(y/t*100):0;document.getElementById('eval-score').textContent=sc.toFixed(0)+'%';document.getElementById('eval-count').textContent=y+'/'+t;}
+        
+        async function submitEvaluation(){
+            const btn=document.getElementById('btn-submit-eval');
+            if(Object.keys(evalData.actions).length===0){showToast('❌ Evalúa al menos una acción',true);return;}
+            const yes=Object.values(evalData.actions).filter(v=>v==='yes').length;
+            const no=Object.values(evalData.actions).filter(v=>v==='no').length;
+            const na=Object.values(evalData.actions).filter(v=>v==='na').length;
+            const total=yes+no;const score=total>0?(yes/total*100):0;
+            const evaluation={
+                fecha:new Date().toISOString(),
+                asesora:evalData.asesora,
+                sucursal:evalData.sucursal,
+                calificacion:score.toFixed(0)+'%',
+                si:yes,
+                no:no,
+                na:na,
+                obs:document.getElementById('eval-observations').value
+            };
+            if(evalData.rol==='regente'){evaluation.tipo='evaluacion_regente';evaluation.regente=evalData.nombre;}
+            else{evaluation.tipo='evaluacion_lider';evaluation.lider=evalData.nombre;}
+            
+            btn.disabled=true;btn.textContent='Enviando...';
+            try{
+                const response=await fetch(data.sheetsURL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(evaluation)});
+                const resData=await response.json();
+                if(resData.result==='success'){
+                    document.getElementById('final-score').textContent=score.toFixed(0)+'%';
+                    document.getElementById('final-yes').textContent=yes;
+                    document.getElementById('final-no').textContent=no;
+                    document.getElementById('final-na').textContent=na;
+                    showScreen('evaluation-sent-screen');
+                }else{showToast('❌ Error: '+(resData.error||'Desconocido'),true);}
+            }catch(err){showToast('⚠️ Error de red: '+err.message,true);}
+            finally{btn.disabled=false;btn.textContent='✓ Enviar';}
+        }
+
+        function showToast(msg,isError=false){const t=document.getElementById('toast');t.textContent=msg;t.className='toast active'+(isError?' error':'');setTimeout(()=>t.classList.remove('active'),isError?8000:3500);}
+        document.addEventListener('click',function(e){if(e.target.classList.contains('modal')||e.target.classList.contains('close-modal'))document.querySelectorAll('.modal').forEach(m=>m.classList.remove('active'));});
+        document.addEventListener('DOMContentLoaded',async function(){loadData();const today=new Date().toISOString().split('T')[0];document.getElementById('advisor-date').value=today;document.getElementById('regent-date').value=today;document.getElementById('lider-date').value=today;if(data.sheetsURL){const s=await loadConfigFromSheets();if(!s){document.getElementById('loading-text').textContent='Verifica tu conexión';setTimeout(()=>showScreen('welcome-screen'),3000);}}else{document.getElementById('loading-text').textContent='Configuración pendiente';setTimeout(()=>showScreen('welcome-screen'),2000);}});
     </script>
 </body>
 </html>
