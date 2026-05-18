@@ -292,10 +292,10 @@
             try {
                 document.getElementById('loading-text').textContent = 'Sincronizando con Google Sheets...';
                 const response = await fetch(data.sheetsURL + '?action=getConfig');
-                            console.log(response.json());
+                console.log(response);
                 if (!response.ok) throw new Error('HTTP ' + response.status);
-                console.log(response.json());
                 const config = await response.json();
+                                console.log(config);
                 if (config.error) throw new Error(config.error);
                 
                 data.branches = config.branches || [];
