@@ -291,7 +291,8 @@
             if (!data.sheetsURL) { document.getElementById('loading-text').textContent = 'Configurando...'; return false; }
             try {
                 document.getElementById('loading-text').textContent = 'Sincronizando con Google Sheets...';
-                const response = await fetch(data.sheetsURL + '?action=getConfig');
+                const response = await fetch(data.sheetsURL);
+                console.log(response.status);
                 if (!response.ok) throw new Error('HTTP ' + response.status);
                 const config = await response.json();
                 if (config.error) throw new Error(config.error);
