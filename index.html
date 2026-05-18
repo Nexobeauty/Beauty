@@ -272,7 +272,9 @@
     <div id="toast" class="toast"></div>
 
     <script>
+        // ✅ IMPORTANTE: Verifica que esta URL sea EXACTAMENTE la de tu implementación "Beauty Final"
         const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbymsAUmdJPng-5lVlYQc7zUkY0x56LgcGeYd49s81AM7qCUEgrddLPy0e4yAqZ0KQPzOA/exec';
+        
         let data = { branches: [], advisors: [], regents: [], leaders: [], brands: [], actions: [], sheetsURL: DEFAULT_SHEETS_URL };
         let currentEstimates = {bs: 0, units: 0}, withPurchase = 0, withoutPurchase = 0, brandUnits = {}, evalData = {}, currentRol = '', configLoaded = false;
 
